@@ -135,7 +135,7 @@ curl -fsSL https://kwerft.dev/v<console version>/install.sh | sudo bash -s -- --
 
 The command downloads the installer of the console's own version, so the server gets the same release as the console.
 
-<div class="warn">A console on v0.5.0-rc.2 or earlier shows a command that downloads <code>…/main/install.sh</code>, the latest stable script, which is still v0.4.0's: it does not know <code>--agent</code> and stops with "Unknown option". Replace the URL with the console's own script, for example <code>https://kwerft.dev/v0.5.0-rc.2/install.sh</code>, and keep the rest. Later versions show the right URL.</div>
+<div class="warn">A console on v0.5.0-rc.3 or earlier shows a command that downloads <code>…/main/install.sh</code>, the latest stable script, which is still v0.4.0's: it does not know <code>--agent</code> and stops with "Unknown option". Replace the URL with the console's own script, for example <code>https://kwerft.dev/v0.5.0-rc.2/install.sh</code>, and keep the rest. Later versions show the right URL.</div>
 
 It installs the same stack as a normal install (k3s, Cilium, Traefik, cert-manager, monitoring) without a console, and the cluster appears under Clusters within a minute. All it needs is outbound HTTPS to the console. More servers join it from its own Nodes tab.
 

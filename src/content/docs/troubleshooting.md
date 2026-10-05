@@ -114,4 +114,4 @@ Rules notify only the channels they name. Open the rule under **Monitoring › A
 
 ## The adopt command fails with "Unknown option: --agent"
 
-The command a console on v0.5.0-rc.2 or earlier shows downloads the stable script, which is still v0.4.0 and has no agent mode. Replace the script URL in the command with the console's own, for example `https://kwerft.dev/v0.5.0-rc.2/install.sh`. Later consoles show their own version's script. See [Clusters & nodes](/docs/clusters-and-nodes#adopt-an-existing-server).
+The command a console on v0.5.0-rc.3 or earlier shows downloads the stable script, which is still v0.4.0 and has no agent mode. Replace the script URL in the command with the console's own, for example `https://kwerft.dev/v0.5.0-rc.2/install.sh`. Later consoles show their own version's script. See [Clusters & nodes](/docs/clusters-and-nodes#adopt-an-existing-server).
