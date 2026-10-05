@@ -1,0 +1,86 @@
+---
+import Base from "../layouts/Base.astro";
+import "../styles/support.css";
+
+const offers = [
+  {
+    eyebrow: "Self-hosted",
+    title: "Free, on your own servers",
+    price: "€0",
+    text: "Everything on this site, with every feature: the installer, the console, monitoring, access control, multiple clusters. Kwerft will be open source under the AGPLv3.",
+    points: ["All features, no seat or node limits", "Community help through GitHub", "Upgrade by re-running the installer"],
+  },
+  {
+    eyebrow: "Kwerft Cloud",
+    title: "We run the console, you keep the servers",
+    price: "Early access",
+    text: "Your Hetzner servers join a console we operate, through the same outbound agent that connects remote clusters today. Your workloads, data and Hetzner bill stay yours; the console's upgrades, backups and monitoring become ours.",
+    points: ["Nothing to install or upgrade on the console", "The console stays reachable when your own servers are not", "Priced per node, month to month"],
+    featured: true,
+  },
+  {
+    eyebrow: "Support",
+    title: "A team behind your cluster",
+    price: "Yearly",
+    text: "For companies that run production on Kwerft. Agreed response times, help with upgrades, restores and incidents, and an onboarding session for your team.",
+    points: ["Response times in writing", "Upgrade and restore assistance", "A commercial license if AGPL doesn't suit your company"],
+  },
+];
+---
+<Base title="Support & hosting" description="Kwerft is free to self-host. For teams that want more: a hosted console that manages your Hetzner servers, and support subscriptions.">
+  <section class="wrap support-head">
+    <p class="eyebrow">Support &amp; hosting</p>
+    <h1>Free to run yourself. Here when you'd rather not.</h1>
+    <p class="lead">Kwerft stays complete and free to self-host. If your team would rather not operate the console, or wants someone to call when production misbehaves, tell us what you need — we're shaping both offers with the first teams who ask.</p>
+  </section>
+
+  <section class="wrap offers" aria-label="Ways to run Kwerft">
+    {offers.map((o) => (
+      <article class:list={["offer", o.featured && "featured"]}>
+        <p class="eyebrow">{o.eyebrow}</p>
+        <h2>{o.title}</h2>
+        <p class="price">{o.price}</p>
+        <p>{o.text}</p>
+        <ul class="checks">{o.points.map((p) => <li>{p}</li>)}</ul>
+        {o.featured ? <a class="btn primary" href="#contact">Join early access</a> : o.eyebrow === "Support" ? <a class="btn ghost" href="#contact">Ask about support</a> : <a class="btn ghost" href="/getting-started">Install it</a>}
+      </article>
+    ))}
+  </section>
+
+  <section class="wrap contact" id="contact">
+    <div class="contact-intro">
+      <h2 class="h2">Get in touch</h2>
+      <p class="lead">A few lines are enough. We answer every message personally, usually within two working days.</p>
+      <p class="muted small">What you send goes to Netlify, which hosts this site, and from there by email to us. We use it only to answer you and delete it when you ask. We don't add you to a newsletter.</p>
+    </div>
+    <form class="form" name="support" method="POST" action="/thanks" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="support" />
+      <p class="hp"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
+      <div class="row">
+        <label>Name<input name="name" required autocomplete="name" /></label>
+        <label>Email<input name="email" type="email" required autocomplete="email" /></label>
+      </div>
+      <div class="row">
+        <label><span>Company <span class="opt">optional</span></span><input name="company" autocomplete="organization" /></label>
+        <label><span>Servers you run or plan to</span>
+          <select name="servers">
+            <option>1</option>
+            <option>2–5</option>
+            <option>6–20</option>
+            <option>More than 20</option>
+            <option>Not sure yet</option>
+          </select>
+        </label>
+      </div>
+      <fieldset>
+        <legend>Interested in</legend>
+        <label class="choice"><input type="checkbox" name="interest" value="Kwerft Cloud" />Kwerft Cloud (hosted console)</label>
+        <label class="choice"><input type="checkbox" name="interest" value="Support" />A support subscription</label>
+        <label class="choice"><input type="checkbox" name="interest" value="Commercial license" />A commercial license</label>
+        <label class="choice"><input type="checkbox" name="interest" value="Other" />Something else</label>
+      </fieldset>
+      <label>Message<textarea name="message" rows="5" required placeholder="What do you run, and what would help?"></textarea></label>
+      <button class="btn primary" type="submit">Send</button>
+    </form>
+  </section>
+</Base>

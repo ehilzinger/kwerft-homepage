@@ -14,7 +14,7 @@ const links = [
       {links.map((l) => (
         <a href={l.href} aria-current={l.match && path.startsWith(l.match) ? "page" : undefined}>{l.label}</a>
       ))}
-      <a href="/docs/installer">Installer</a>
+      <a href="/support" aria-current={path.startsWith("/support") ? "page" : undefined}>Support</a>
     </nav>
     <div class="head-end">
       <button class="icon-btn" type="button" id="theme-btn" aria-label="Switch colour theme" title="Switch colour theme">

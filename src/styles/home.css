@@ -59,12 +59,6 @@
   .feature-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
 }
 
-.checks, .todo { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-.checks li, .todo li { position: relative; padding-left: 28px; color: var(--ink-2); font-size: 15.5px; }
-.checks li::before { content: ""; position: absolute; left: 2px; top: 5px; width: 16px; height: 16px; border-radius: 50%; background: var(--ok-bg); }
-.checks li::after { content: ""; position: absolute; left: 7px; top: 9px; width: 6px; height: 4px; border-left: 1.6px solid var(--ok); border-bottom: 1.6px solid var(--ok); transform: rotate(-45deg); }
-.todo li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed var(--faint); }
-
 .stack { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .stack li { display: grid; grid-template-columns: 116px 1fr; gap: 16px; align-items: center; padding: 14px 18px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
 .stack li:first-child { background: var(--accent-2); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }

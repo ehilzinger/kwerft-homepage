@@ -212,3 +212,10 @@ p { text-wrap: pretty; }
 .prose pre .token.key, .prose pre .token.atrule, .prose pre .token.property { color: #9fd3ff; }
 .prose pre .token.number, .prose pre .token.boolean, .prose pre .token.variable, .prose pre .token.parameter { color: var(--term-warn); }
 .prose pre .token.operator, .prose pre .token.punctuation { color: var(--term-dim); }
+
+/* ---------- check lists (homepage, support) ---------- */
+.checks, .todo { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.checks li, .todo li { position: relative; padding-left: 28px; color: var(--ink-2); font-size: 15.5px; }
+.checks li::before { content: ""; position: absolute; left: 2px; top: 5px; width: 16px; height: 16px; border-radius: 50%; background: var(--ok-bg); }
+.checks li::after { content: ""; position: absolute; left: 7px; top: 9px; width: 6px; height: 4px; border-left: 1.6px solid var(--ok); border-bottom: 1.6px solid var(--ok); transform: rotate(-45deg); }
+.todo li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed var(--faint); }

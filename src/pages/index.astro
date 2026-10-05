@@ -4,6 +4,7 @@ import Screenshot from "../components/Screenshot.astro";
 import Command from "../components/Command.astro";
 import { INSTALL_CMD, INSTALL_DISPLAY, LATEST, RELEASES_URL } from "../site";
 import "../styles/home.css";
+import "../styles/support.css";
 
 const features = [
   {
@@ -269,6 +270,17 @@ const stack = [
           </ul>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="section" id="support">
+    <div class="wrap support-teaser">
+      <div>
+        <p class="eyebrow">Support &amp; hosting</p>
+        <h2 class="h2">Rather not run the console yourself?</h2>
+        <p class="lead">Kwerft stays free and complete to self-host. For teams that want more, we're starting a hosted console that manages your own Hetzner servers, and support subscriptions with agreed response times.</p>
+      </div>
+      <div class="btns"><a class="btn primary" href="/support">Support &amp; hosting</a><a class="btn ghost" href="/support#contact">Get in touch</a></div>
     </div>
   </section>
 
