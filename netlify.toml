@@ -26,11 +26,16 @@
   to = "/docs.html"
   status = 200
 
-# The installer's eventual short URL (docs/plan.md: get.kwerft.dev). Until it
-# exists, kwerft.dev/install.sh forwards to the published script.
+# The advertised installer URL. 302, not 301, so the target can change later.
+# /<version>/install.sh pins a release (kwerft-install keeps one per tag).
 [[redirects]]
   from = "/install.sh"
   to = "https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh"
+  status = 302
+
+[[redirects]]
+  from = "/:version/install.sh"
+  to = "https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/:version/install.sh"
   status = 302
 
 [[redirects]]

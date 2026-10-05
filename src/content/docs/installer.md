@@ -9,16 +9,16 @@ order: 1
 
 ## Run it
 
-The script runs as root. Pipe it from GitHub:
+The script runs as root. `kwerft.dev/install.sh` forwards to the script in the public [ehilzinger/kwerft-install](https://github.com/ehilzinger/kwerft-install) repository on GitHub:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh | sudo bash -s -- --domain ops.example.com --email ops@example.com --yes
+curl -fsSL https://kwerft.dev/install.sh | sudo bash -s -- --domain ops.example.com --email ops@example.com --yes
 ```
 
 Or download it first, read it, and run it:
 
 ```bash
-curl -fsSLO https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh
+curl -fsSLO https://kwerft.dev/install.sh
 sudo bash install.sh --help
 ```
 
@@ -26,13 +26,13 @@ The whole script is a set of functions called on its last line, so a download th
 
 ## Pin a version
 
-`…/kwerft-install/main/install.sh` is always the latest stable release (v0.4.0 at the time of writing). Every release, release candidates included, also has its own copy:
+`https://kwerft.dev/install.sh` is always the latest stable release (v0.4.0 at the time of writing). Every release, release candidates included, also has its own copy at `https://kwerft.dev/<version>/install.sh`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/v0.4.0/install.sh | sudo bash -s -- --domain ops.example.com --yes
+curl -fsSL https://kwerft.dev/v0.4.0/install.sh | sudo bash -s -- --domain ops.example.com --yes
 ```
 
-A pinned script installs its own version. The release candidates of v0.5.0, which bring [Clusters & nodes](/docs/clusters-and-nodes), the Hetzner Cloud integration and several of the flags below, are at `…/main/v0.5.0-rc.2/install.sh`.
+A pinned script installs its own version. The release candidates of v0.5.0, which bring [Clusters & nodes](/docs/clusters-and-nodes), the Hetzner Cloud integration and several of the flags below, are at `https://kwerft.dev/v0.5.0-rc.2/install.sh`.
 
 `--version` picks the Kwerft release (console image and Helm chart) independently of the script; it takes `0.4.0` or `v0.4.0`. The installer checks that the release is published before it changes anything and stops with exit code 50 if it is not. Prefer the script of the release you install, since flags and stages change between releases.
 
@@ -124,7 +124,7 @@ Options with a value can also come from the environment; flags win. This suits c
 Switches such as `--lite`, `--yes` or `--agent` have no environment variable; pass them as flags.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh \
+curl -fsSL https://kwerft.dev/install.sh \
   | sudo KWERFT_DOMAIN=ops.example.com bash -s -- --yes
 ```
 
@@ -217,7 +217,7 @@ Exit codes are a stable contract for automation:
 If a firewall change locked you out of SSH, open the server's console from Hetzner (VNC for Cloud servers, KVM for dedicated ones) and run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh | sudo bash -s -- --reset-firewall
+curl -fsSL https://kwerft.dev/install.sh | sudo bash -s -- --reset-firewall
 ```
 
 It removes Kwerft's nftables table and pauses the console's firewall rules on this node, so they are not put back. Run your install command again to restore the baseline, and delete `/var/lib/kwerft/firewall/paused` to let the console manage this node's firewall again. See [Network › Server firewall](/docs/network#server-firewall).
@@ -225,7 +225,7 @@ It removes Kwerft's nftables table and pauses the console's firewall rules on th
 ## Uninstall
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh | sudo bash -s -- --uninstall --yes
+curl -fsSL https://kwerft.dev/install.sh | sudo bash -s -- --uninstall --yes
 ```
 
 This removes k3s with every workload on the server and the data on its local volumes, Kwerft's firewall table, the registry mirror and AppArmor profile, `/var/lib/kwerft`, `/etc/kwerft` and Kwerft's sysctl, module and SSH files. The logs in `/var/log/kwerft` stay. Without `--yes` it asks first.

@@ -15,7 +15,7 @@ npm run build     # static site in dist/
 |---|---|
 | `src/pages/` | Homepage, `getting-started`, docs index and `docs/[id]` |
 | `src/content/docs/` | Help pages (Markdown; frontmatter schema in `src/content.config.ts`) |
-| `src/site.ts` | Install command and latest release — update when a release ships |
+| `src/site.ts` | Install command (`kwerft.dev/install.sh`, redirected in `netlify.toml`) and latest release — update when a release ships |
 | `src/styles/tokens.css` | Design tokens, copied from `werft/web/src/styles/tokens.css` |
 | `src/assets/screenshots/` | Console screenshots, made by `tools/screenshots` |
 | `netlify.toml` | Build, security headers (CSP `'self'`, nothing inline), redirects |

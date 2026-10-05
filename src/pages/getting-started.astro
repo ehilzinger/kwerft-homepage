@@ -2,7 +2,7 @@
 import Base from "../layouts/Base.astro";
 import Command from "../components/Command.astro";
 import Screenshot from "../components/Screenshot.astro";
-import { INSTALL_CMD, INSTALL_URL, LATEST } from "../site";
+import { INSTALL_CMD, LATEST, SCRIPT_SOURCE } from "../site";
 import "../styles/guide.css";
 
 const toc = [
@@ -64,7 +64,7 @@ const toc = [
           <ul>
             <li><code>--email</code> is optional; Let's Encrypt uses it for expiry notices.</li>
             <li>Want to see the plan first? Add <code>--dry-run</code> and nothing is changed.</li>
-            <li>The URL always serves the latest stable release. To pin one, use <code>…/kwerft-install/main/{LATEST}/install.sh</code>.</li>
+            <li>The URL always serves the latest stable release. To pin one, use <code>https://kwerft.dev/{LATEST}/install.sh</code>.</li>
             <li>Something failed? The script stops with an exit code that says where, and running it again picks up where it left off. See <a href="/docs/troubleshooting">Troubleshooting</a>.</li>
           </ul>
         </section>
@@ -112,7 +112,7 @@ const toc = [
             <a href="/docs/clusters-and-nodes"><b>Add nodes</b><span>Hetzner Cloud servers, dedicated servers, more clusters</span></a>
             <a href="/docs/access#kubectl"><b>Use kubectl</b><span>A scoped kubeconfig through the console</span></a>
           </div>
-          <p class="muted after">Installing unattended, for example from cloud-init? Options that take a value also work as <code>KWERFT_Options that take a value also work as <code>KWERFT_&lt;NAME&gt;</code> environment variables, and <code>--yes</code> skips all prompts.lt;NAMEOptions that take a value also work as <code>KWERFT_&lt;NAME&gt;</code> environment variables, and <code>--yes</code> skips all prompts.gt;</code> environment variables, and <code>--yes</code> skips all prompts. See the <a href="/docs/installer">installer reference</a>. The script itself is at <a href={INSTALL_URL}>{INSTALL_URL.replace("https://", "")}</a>.</p>
+          <p class="muted after">Installing unattended, for example from cloud-init? Options that take a value also work as <code>KWERFT_&lt;NAME&gt;</code> environment variables, and <code>--yes</code> skips all prompts. See the <a href="/docs/installer">installer reference</a>. <code>kwerft.dev/install.sh</code> forwards to the script in <a href={SCRIPT_SOURCE}>ehilzinger/kwerft-install</a> on GitHub, where you can read it first.</p>
         </section>
       </div>
     </div>

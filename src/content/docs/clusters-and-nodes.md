@@ -130,10 +130,12 @@ Kwerft creates a Cloud Network `kwerft-<name>` and the first server, which insta
 For a dedicated server, or a server elsewhere, click **Adopt a cluster**, enter a name and click **Add cluster**. Kwerft shows an install command once; run it as root on a fresh Ubuntu 22.04, 24.04 or 26.04 server with 4 GB of RAM or more:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh | sudo bash -s -- --agent --console https://ops.example.com --cluster-token kwag_… --version <console version>
+curl -fsSL https://kwerft.dev/v<console version>/install.sh | sudo bash -s -- --agent --console https://ops.example.com --cluster-token kwag_… --version <console version>
 ```
 
-<div class="warn">While v0.5.0 is a release candidate, the script at <code>…/main/install.sh</code> is still v0.4.0's, which does not know <code>--agent</code> and stops with "Unknown option". Replace the URL in the command with the release candidate's own script, for example <code>https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/v0.5.0-rc.2/install.sh</code>, and keep the rest.</div>
+The command downloads the installer of the console's own version, so the server gets the same release as the console.
+
+<div class="warn">A console on v0.5.0-rc.2 or earlier shows a command that downloads <code>…/main/install.sh</code>, the latest stable script, which is still v0.4.0's: it does not know <code>--agent</code> and stops with "Unknown option". Replace the URL with the console's own script, for example <code>https://kwerft.dev/v0.5.0-rc.2/install.sh</code>, and keep the rest. Later versions show the right URL.</div>
 
 It installs the same stack as a normal install (k3s, Cilium, Traefik, cert-manager, monitoring) without a console, and the cluster appears under Clusters within a minute. All it needs is outbound HTTPS to the console. More servers join it from its own Nodes tab.
 

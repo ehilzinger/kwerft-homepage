@@ -97,7 +97,7 @@ After a rollback, the page says so and offers **Apply again** or **Discard the c
 Open the server's console from Hetzner (the Cloud Console's VNC console, or a KVM console for a dedicated server), log in as root and run the installer with `--reset-firewall`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh | sudo bash -s -- --reset-firewall
+curl -fsSL https://kwerft.dev/install.sh | sudo bash -s -- --reset-firewall
 ```
 
 This removes Kwerft's firewall table and pauses the console's firewall rules on that node. Re-run your install command to restore the baseline. To let the console manage that node's firewall again, delete `/var/lib/kwerft/firewall/paused`.

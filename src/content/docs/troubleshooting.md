@@ -70,7 +70,7 @@ If you just moved the console to a new hostname, the old one redirects for a day
 A firewall change that removes access rolls back by itself after 60 seconds unless someone keeps it, and Kwerft refuses changes that would block SSH from the address you are using. If you are locked out anyway, open the server's console from Hetzner (VNC for Cloud servers, KVM for dedicated ones), log in as root and run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh | sudo bash -s -- --reset-firewall
+curl -fsSL https://kwerft.dev/install.sh | sudo bash -s -- --reset-firewall
 ```
 
 Then re-run your install command to restore the baseline firewall, and delete `/var/lib/kwerft/firewall/paused` once you want the console to manage that node's firewall again. See [Network › Lock-out protection](/docs/network#lock-out-protection).
@@ -114,4 +114,4 @@ Rules notify only the channels they name. Open the rule under **Monitoring › A
 
 ## The adopt command fails with "Unknown option: --agent"
 
-The command a v0.5.0 release candidate shows downloads the stable script, which is still v0.4.0 and has no agent mode. Replace the script URL in the command with the release candidate's, for example `…/kwerft-install/main/v0.5.0-rc.2/install.sh`. See [Clusters & nodes](/docs/clusters-and-nodes#adopt-an-existing-server).
+The command a console on v0.5.0-rc.2 or earlier shows downloads the stable script, which is still v0.4.0 and has no agent mode. Replace the script URL in the command with the console's own, for example `https://kwerft.dev/v0.5.0-rc.2/install.sh`. Later consoles show their own version's script. See [Clusters & nodes](/docs/clusters-and-nodes#adopt-an-existing-server).
