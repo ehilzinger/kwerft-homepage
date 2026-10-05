@@ -8,6 +8,10 @@ export const INSTALL_CMD = `curl -fsSL ${INSTALL_URL} | sudo bash -s -- --domain
 export const INSTALL_DISPLAY = `curl -fsSL ${INSTALL_URL} | sudo bash -s -- \\\n  --domain ops.example.com --email ops@example.com --yes`;
 export const RELEASES_URL = "https://github.com/ehilzinger/kwerft-install/releases";
 export const LATEST = "v0.4.0";
+/** The newest release candidate; features newer than LATEST carry its version as a badge. */
+export const PREVIEW = "v0.6.0-rc.1";
+/** The source code (AGPL-3.0-only). */
+export const SOURCE_URL = "https://github.com/ehilzinger/kwerft";
 
 /** The site's operator, for the Impressum and the privacy policy (same as hatchure.app's). */
 export const OPERATOR = {

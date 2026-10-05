@@ -1,0 +1,269 @@
+{
+ "apps": [
+  {
+   "name": "returns",
+   "service": "returns",
+   "spec": {
+    "source": {
+     "image": {
+      "ref": "ghcr.io/example-shop/returns:1.4.0"
+     }
+    },
+    "replicas": 2,
+    "size": "medium",
+    "args": [
+     "node",
+     "server.js"
+    ],
+    "env": [
+     {
+      "name": "DATABASE_URL",
+      "valueFrom": {
+       "secretKeyRef": {
+        "name": "returns-env",
+        "key": "DATABASE_URL"
+       }
+      }
+     },
+     {
+      "name": "LABEL_PRINTER",
+      "value": "zebra"
+     },
+     {
+      "name": "REDIS_URL",
+      "value": "redis://returns-cache:6379"
+     },
+     {
+      "name": "SMTP_PASSWORD",
+      "valueFrom": {
+       "secretKeyRef": {
+        "name": "returns-env",
+        "key": "SMTP_PASSWORD"
+       }
+      }
+     }
+    ],
+    "ports": [
+     {
+      "container": 8080,
+      "public": "returns.apps.example.com",
+      "protocol": "TCP"
+     }
+    ],
+    "allowFrom": [
+     "returns-cache",
+     "returns-db",
+     "returns-worker"
+    ],
+    "healthCheck": {
+     "http": "/healthz",
+     "port": 8080
+    }
+   }
+  },
+  {
+   "name": "returns-worker",
+   "service": "returns-worker",
+   "spec": {
+    "source": {
+     "image": {
+      "ref": "ghcr.io/example-shop/returns:1.4.0"
+     }
+    },
+    "size": "small",
+    "args": [
+     "node",
+     "worker.js"
+    ],
+    "env": [
+     {
+      "name": "DATABASE_URL",
+      "valueFrom": {
+       "secretKeyRef": {
+        "name": "returns-worker-env",
+        "key": "DATABASE_URL"
+       }
+      }
+     },
+     {
+      "name": "REDIS_URL",
+      "value": "redis://returns-cache:6379"
+     }
+    ]
+   }
+  },
+  {
+   "name": "returns-db",
+   "service": "returns-db",
+   "spec": {
+    "source": {
+     "image": {
+      "ref": "postgres:18.6-trixie"
+     }
+    },
+    "size": "small",
+    "env": [
+     {
+      "name": "POSTGRES_PASSWORD",
+      "valueFrom": {
+       "secretKeyRef": {
+        "name": "returns-db-env",
+        "key": "POSTGRES_PASSWORD"
+       }
+      }
+     },
+     {
+      "name": "POSTGRES_USER",
+      "value": "returns"
+     }
+    ],
+    "ports": [
+     {
+      "container": 5432,
+      "protocol": "TCP"
+     }
+    ],
+    "allowFrom": [
+     "returns",
+     "returns-cache",
+     "returns-worker"
+    ],
+    "volumes": [
+     {
+      "path": "/var/lib/postgresql",
+      "volume": "returns-data"
+     }
+    ],
+    "healthCheck": {
+     "port": 5432
+    }
+   }
+  },
+  {
+   "name": "returns-cache",
+   "service": "returns-cache",
+   "spec": {
+    "source": {
+     "image": {
+      "ref": "redis:8.10.2-alpine"
+     }
+    },
+    "size": "small",
+    "ports": [
+     {
+      "container": 6379,
+      "protocol": "TCP"
+     }
+    ],
+    "allowFrom": [
+     "returns",
+     "returns-db",
+     "returns-worker"
+    ]
+   }
+  }
+ ],
+ "volumes": [
+  {
+   "name": "returns-data",
+   "spec": {
+    "size": "20Gi",
+    "class": "local-nvme"
+   }
+  }
+ ],
+ "secretSets": [
+  {
+   "name": "returns-env",
+   "app": "returns",
+   "description": "Secret variables of returns, from its Compose file",
+   "keys": [
+    "DATABASE_URL",
+    "SMTP_PASSWORD"
+   ]
+  },
+  {
+   "name": "returns-worker-env",
+   "app": "returns-worker",
+   "description": "Secret variables of returns-worker, from its Compose file",
+   "keys": [
+    "DATABASE_URL"
+   ]
+  },
+  {
+   "name": "returns-db-env",
+   "app": "returns-db",
+   "description": "Secret variables of returns-db, from its Compose file",
+   "keys": [
+    "POSTGRES_PASSWORD"
+   ]
+  }
+ ],
+ "warnings": [
+  {
+   "level": "warning",
+   "service": "returns",
+   "key": "depends_on",
+   "message": "Start order is not kept: all apps start together, so this one must retry (or restart) until returns-db, returns-cache are up."
+  },
+  {
+   "level": "info",
+   "service": "returns",
+   "key": "environment",
+   "message": "DATABASE_URL holds a password in its URL: kept in the app's secret set."
+  },
+  {
+   "level": "info",
+   "service": "returns",
+   "key": "deploy.resources",
+   "message": "Size medium (0.5 CPU, 512 MiB) for its memory limit 512M."
+  },
+  {
+   "level": "warning",
+   "service": "returns-worker",
+   "key": "depends_on",
+   "message": "Start order is not kept: all apps start together, so this one must retry (or restart) until returns-db is up."
+  },
+  {
+   "level": "info",
+   "service": "returns-worker",
+   "key": "environment",
+   "message": "DATABASE_URL holds a password in its URL: kept in the app's secret set."
+  },
+  {
+   "level": "info",
+   "service": "returns-db",
+   "key": "healthcheck",
+   "message": "pg_isready became a TCP check on port 5432."
+  },
+  {
+   "level": "warning",
+   "service": "returns-cache",
+   "key": "volumes[0]",
+   "message": "The bind mount ./redis.conf \u2192 /usr/local/etc/redis/redis.conf is not made: the server's files are not the app's. Use a named volume and copy the files in, or a Secret mounted as files for configuration."
+  },
+  {
+   "level": "warning",
+   "service": "returns-cache",
+   "key": "volumes",
+   "message": "Its data (/data) is on the container's file system and lost when the app restarts: mount a named volume there."
+  },
+  {
+   "level": "info",
+   "service": "returns-db",
+   "key": "ports",
+   "message": "Reachable inside the project on port 5432 (as other services name it)."
+  },
+  {
+   "level": "info",
+   "service": "returns-cache",
+   "key": "ports",
+   "message": "Reachable inside the project on port 6379 (as other services name it)."
+  },
+  {
+   "level": "info",
+   "message": "Apps reach the internet over HTTPS only (Kwerft's default); set x-kwerft: {egress: all} on a service, or change it in the app's settings."
+  }
+ ],
+ "renames": []
+}

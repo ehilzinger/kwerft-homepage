@@ -1,11 +1,11 @@
 ---
 title: Installer reference
-description: Every flag of install.sh, the --config file, environment variables, the install stages, re-running to repair or upgrade, version pinning, exit codes, the firewall rescue and uninstalling.
+description: Every flag of install.sh, the --config file, environment variables, remembered settings, the install stages, re-running to repair or upgrade, version pinning, restoring from a backup, exit codes, the firewall rescue and uninstalling.
 group: Reference
 order: 1
 ---
 
-`install.sh` is a single bash script that turns a fresh Ubuntu server into a Kwerft cluster. It also joins servers to a cluster, installs remote clusters in agent mode, rescues a locked firewall and uninstalls. Every stage is idempotent: running the same command again repairs or upgrades the install. For a first install, start with [Getting started](/getting-started).
+`install.sh` is a single bash script that turns a fresh Ubuntu server into a Kwerft cluster. It also joins servers to a cluster, installs remote clusters in agent mode, restores a console from a backup, rescues a locked firewall and uninstalls. Every stage is idempotent: running the same command again repairs or upgrades the install. For a first install, start with [Getting started](/getting-started).
 
 ## Run it
 
@@ -32,7 +32,13 @@ The whole script is a set of functions called on its last line, so a download th
 curl -fsSL https://kwerft.dev/v0.4.0/install.sh | sudo bash -s -- --domain ops.example.com --yes
 ```
 
-A pinned script installs its own version. The release candidates of v0.5.0, which bring [Clusters & nodes](/docs/clusters-and-nodes), the Hetzner Cloud integration and several of the flags below, are at `https://kwerft.dev/v0.5.0-rc.2/install.sh`.
+A pinned script installs its own version. To try what is in release candidates, pin the newest one, v0.6.0-rc.1:
+
+```bash
+curl -fsSL https://kwerft.dev/v0.6.0-rc.1/install.sh | sudo bash -s -- --domain ops.example.com --yes
+```
+
+v0.6.0-rc.1 contains everything from the v0.5.0 release candidates ([Clusters & nodes](/docs/clusters-and-nodes), the Hetzner Cloud integration and several of the flags below) and adds [backups](/docs/backups), [upgrades from the console](/docs/upgrades), [secret sets](/docs/secrets), and [templates and the Compose import](/docs/templates-and-compose). Release candidates are for trying things out; expect changes before the release.
 
 `--version` picks the Kwerft release (console image and Helm chart) independently of the script; it takes `0.4.0` or `v0.4.0`. The installer checks that the release is published before it changes anything and stops with exit code 50 if it is not. Prefer the script of the release you install, since flags and stages change between releases.
 
@@ -40,7 +46,7 @@ The console image is `ghcr.io/ehilzinger/kwerft` (amd64 and arm64) and the chart
 
 ## Options
 
-Flags marked **v0.5.0** exist from the v0.5.0 release candidates on.
+Flags marked **v0.5.0** exist from the v0.5.0 release candidates on, flags marked **v0.6.0** from v0.6.0-rc.1 on.
 
 ### Install
 
@@ -48,14 +54,15 @@ Flags marked **v0.5.0** exist from the v0.5.0 release candidates on.
 |---|---|
 | `--domain HOST` | The console's hostname. Without it, a temporary `<public-ip>.sslip.io` name is used. A hostname given here replaces the one chosen in Settings; without it, a re-run keeps the current one. |
 | `--email ADDR` | Let's Encrypt account contact (optional). |
-| `--acme-server URL` | **v0.5.0.** The ACME directory for certificates, or `staging` for Let's Encrypt's staging CA (untrusted certificates, generous rate limits, for tests). Default: Let's Encrypt production. Give it on every run. |
+| `--acme-server URL` | **v0.5.0.** The ACME directory for certificates, or `staging` for Let's Encrypt's staging CA (untrusted certificates, generous rate limits, for tests). Default: Let's Encrypt production. Remembered from v0.6.0 on; with earlier releases, give it on every run. |
 | `--config FILE` | Read settings from a YAML file; see [Config file](#config-file). |
 | `--platform P` | `auto` (default), `cloud` or `dedicated`. `auto` asks the Hetzner Cloud metadata service. |
 | `--private-iface IF` | The interface for node-to-node and Kubernetes API traffic. By default, the first interface with a private (RFC 1918) address that is not the default route. |
 | `--version V` | The Kwerft release to install. Default: the script's own release. |
-| `--channel C` | `stable` (default) or `edge`. Currently only shown in the installer's banner; choose releases with `--version`. |
-| `--lite` | Smaller footprint for 4 GB servers: no Hubble, metrics kept 7 days and logs 3 days instead of 30 and 14. |
+| `--channel C` | `stable` (default) or `edge`. Only shown in the installer's banner and remembered; choose releases with `--version`. The console's update channel is set under [Settings › Updates](/docs/upgrades#update-policy). |
+| `--lite` | Smaller footprint for 4 GB servers: no Hubble, no Velero (so no [backups](/docs/backups)), metrics kept 7 days and logs 3 days instead of 30 and 14. |
 | `--harden-ssh` | Turn off SSH password logins and root password logins. Check that your SSH key works first. |
+| `--k3s-version V` | **v0.6.0.** The k3s release a new server installs instead of the pinned one, such as `v1.37.1+k3s1`; also with `--join` and `--agent`. A running cluster keeps its version: upgrade it under [Settings › Updates](/docs/upgrades#upgrade-kubernetes). Node pools pass the cluster's running version. |
 
 ### Join an existing cluster
 
@@ -88,6 +95,14 @@ A server keeps the mode it was installed in: `--agent` on a console server, or a
 | `--image REF` | Run this console image (`repository:tag`) instead of the release's. |
 | `--image-archive FILE` | Import a docker/OCI tarball into k3s first; needs `--image`. |
 
+### Restore onto a new server
+
+**v0.6.0.** See [Restore from a backup](#restore-from-a-backup) and [Backups](/docs/backups#restore-the-whole-console-onto-a-new-server).
+
+| Flag | What it does |
+|---|---|
+| `--restore B` | Restore the console and every project from a backup: `latest` (the newest complete Cluster backup) or a backup's name. Needs `--config` with a `backups:` block. The console's hostname comes from the backup unless `--domain` is given. |
+
 ### Maintenance
 
 | Flag | What it does |
@@ -101,6 +116,7 @@ A server keeps the mode it was installed in: `--agent` on a console server, or a
 |---|---|
 | `--dry-run` | Print the plan without changing anything. |
 | `--yes`, `-y` | Never prompt. Needed when nothing can answer a prompt, such as `--uninstall` from a script. |
+| `--progress FILE` | **v0.6.0.** Write one JSON line per stage to `FILE` (`{"id", "label", "state", "detail", "at"}`, with `state` `ok`, `skip` or `fail`), then `{"exit": <code>}`. The console's upgrades read it. The file's directory must exist. |
 | `--help`, `-h` | Show the help. |
 
 ## Environment variables
@@ -120,8 +136,12 @@ Options with a value can also come from the environment; flags win. This suits c
 | `KWERFT_JOIN_URL`, `KWERFT_JOIN_TOKEN`, `KWERFT_JOIN_ROLE` | `--join`, `--token`, `--role` |
 | `KWERFT_CONSOLE`, `KWERFT_CLUSTER_TOKEN` | `--console`, `--cluster-token` |
 | `KWERFT_IMAGE`, `KWERFT_IMAGE_ARCHIVE` | `--image`, `--image-archive` |
+| `KWERFT_LITE`, `KWERFT_HARDEN_SSH` | `--lite`, `--harden-ssh` (v0.6.0; `1`, `true` or `yes`; `KWERFT_LITE=0` turns a remembered `--lite` off) |
+| `KWERFT_K3S_VERSION` | `--k3s-version` (v0.6.0) |
+| `KWERFT_PROGRESS` | `--progress` (v0.6.0) |
+| `KWERFT_RESTORE` | `--restore` (v0.6.0) |
 
-Switches such as `--lite`, `--yes` or `--agent` have no environment variable; pass them as flags.
+Switches such as `--yes`, `--dry-run` or `--agent` have no environment variable; pass them as flags. Before v0.6.0, `--lite` and `--harden-ssh` had none either.
 
 ```bash
 curl -fsSL https://kwerft.dev/install.sh \
@@ -155,6 +175,12 @@ hcloud:
 | `hcloud.tokenFile` | **v0.5.0.** A file with a Hetzner Cloud API token (Read & Write), stored as Settings › Hetzner Cloud API's token. On Cloud servers it also adds Cloud Volumes. |
 | `hcloud.cloudControllerManager` | **v0.5.0.** `true` installs the Hetzner cloud-controller-manager. Cloud servers only, needs `hcloud.tokenFile`, and only takes effect on a cluster's first install. |
 | `hcloud.loadBalancer` | **v0.5.0.** `true` or `false`: a Hetzner Load Balancer in front of the ingress. When set, it replaces the choice in Settings on every run. |
+| `backups.endpoint` | **v0.6.0**, for `--restore` only. The S3 endpoint, such as `https://fsn1.your-objectstorage.com`. |
+| `backups.region` | Optional. Taken from a Hetzner endpoint (`fsn1`), else `us-east-1`. |
+| `backups.bucket` | The bucket the backups are in. |
+| `backups.prefix` | The folder in the bucket, as Settings › Backups showed it. Defaults to `--domain`; without either it is required. |
+| `backups.accessKeyFile`, `backups.secretKeyFile` | Files with the S3 access key and secret key. |
+| `backups.recoveryKeyFile` | A file with the recovery key. The file the console offers for download works as it is. |
 
 An apps domain or DNS solver given here replaces what was chosen in Settings; without them, Settings stays as it is. The token files stay where they are; the cluster keeps a copy that the console never shows. See [Domains & TLS](/docs/domains-and-tls) and [Clusters & nodes](/docs/clusters-and-nodes).
 
@@ -162,24 +188,27 @@ An apps domain or DNS solver given here replaces what was chosen in Settings; wi
 
 ## Stages
 
-The installer runs these stages in order and prints one line per stage. Completed stages are recorded in `/var/lib/kwerft/stages/`.
+The installer runs these stages in order and prints one line per stage. Completed stages are recorded in `/var/lib/kwerft/stages/`. The column on the right is v0.6.0's behaviour; before it, System and Helm also ran only once.
 
 | Stage | What it does | On a re-run |
 |---|---|---|
 | Preflight | Root, Ubuntu version, architecture, RAM, disk, cgroup v2, ports 80/443, outbound HTTPS, public IPv4, release published | Always runs |
-| System | Packages, kernel modules, sysctls, swap off, chrony, unattended-upgrades, optional SSH hardening | Skipped |
+| System | Packages, kernel modules, sysctls, swap off, chrony, unattended-upgrades, optional SSH hardening | Always runs |
 | Firewall | Kwerft's nftables table: 22, 80, 443 public, cluster traffic only from the private network and pods | Always runs |
-| Kubernetes | k3s server with embedded etcd and secrets encryption | Skipped |
+| Kubernetes | k3s server with embedded etcd and secrets encryption; from v0.6.0 also local etcd snapshots every 6 hours | Skipped: shows the running k3s version |
 | Registry mirror | Lets every node pull images built from Git from the in-cluster registry | Always runs |
-| Helm | Installs Helm | Skipped |
+| Helm | Installs Helm | Always runs |
+| Upgrades | **v0.6.0.** The system-upgrade-controller, which [Kubernetes upgrades](/docs/upgrades#upgrade-kubernetes) use, and the label `kwerft.dev/installer=true` on this server's node | Always runs |
 | Network | Cilium with WireGuard and (unless `--lite`) Hubble | Always runs |
 | Hetzner Cloud | **v0.5.0.** On Cloud servers with a token: CSI driver (Cloud Volumes), optionally the cloud-controller-manager | Always runs |
 | Ingress & TLS | Gateway API, cert-manager with the Hetzner DNS webhook, Traefik on ports 80/443 | Always runs |
 | Observability | VictoriaMetrics, VictoriaLogs and Vector | Always runs |
+| Backups | **v0.6.0.** Velero for [backups](/docs/backups) (not with `--lite`), and the etcd snapshot settings | Always runs |
+| Restore | **v0.6.0.** Only with `--restore`: restores the backup | Skipped once done |
 | Kwerft | Kwerft's resources and Helm chart (in agent mode: **Kwerft agent**) | Always runs |
 | Handoff | Checks DNS, creates the setup token if needed, prints the summary | Always runs |
 
-In join mode the stages are Preflight, System, Firewall, **Join cluster** and Registry mirror.
+In agent mode, Backups, Restore and Handoff do not run. In join mode the stages are Preflight, System, Firewall, **Join cluster** and Registry mirror.
 
 `--dry-run` lists the stages it would run without running any.
 
@@ -187,16 +216,48 @@ The installer's own log is `/var/log/kwerft/install.log`. When a stage fails, th
 
 ## Re-run to repair or upgrade
 
-Run the same command again at any time:
+Run the same command again at any time. Re-running converges everything but Kubernetes:
 
 - **Repair:** stages that always run converge the server back to the expected state; completed one-time stages are skipped.
-- **Upgrade:** the script of a newer release upgrades Kwerft and the components pinned in it (Cilium, cert-manager, Traefik, monitoring). k3s is installed once and not upgraded by a re-run. Upgrades with automatic rollback are planned before the public beta.
-- **Settings are kept:** without `--domain`, the console's hostname stays what Settings chose. `--acme-server` must be given on every run, or certificates come from Let's Encrypt production again.
+- **Upgrade:** the script of a newer release upgrades Kwerft and the components pinned in it (Cilium, cert-manager, Traefik, monitoring, and from v0.6.0 Velero, the system-upgrade-controller, system packages and Helm). k3s keeps the version it was installed with, on every node; from v0.6.0 it is upgraded from the console. From v0.6.0 on, the console also upgrades Kwerft itself, with automatic rollback: see [Upgrades](/docs/upgrades).
+- **Settings are kept:** without `--domain`, the console's hostname stays what Settings chose. Other settings are remembered from v0.6.0 on (next section); before v0.6.0, `--acme-server` must be given on every run, or certificates come from Let's Encrypt production again.
 - **The firewall stays up:** reloading the firewall replaces Kwerft's base rules in one step and keeps the console's rules, so there is no moment without a firewall.
+
+### Remembered settings
+
+**v0.6.0.** Every run writes its settings to `/var/lib/kwerft/install.env` (root only), and later runs reuse them, so a re-run needs no flags: `--email`, `--acme-server`, `--platform`, `--private-iface`, `--lite`, `--harden-ssh`, `--channel`, the mode (install, agent or join) and, in agent mode, `--console`. Flags and `KWERFT_*` environment variables win over the file.
+
+Not remembered: the console's hostname (Settings is the record), tokens, `--config`, `--version` and `--k3s-version`. An agent cluster reads its agent token back from the cluster; a joined server re-runs without `--join` and `--token`.
+
+A server installed before v0.6.0 has no such file yet. On its first run of a v0.6.0 installer, give the flags you installed with (for example `--acme-server staging` or `--lite`); after that they are remembered.
 
 ### The setup token
 
 The handoff stage creates a single-use setup token in `/etc/kwerft/setup-token` (readable by root only), valid for 24 hours; only its hash goes into the cluster. If the file is lost or the token expired before anyone used it, a re-run creates a new one. Once the owner account exists, a re-run removes any leftover token and prints the console's address instead.
+
+## Restore from a backup
+
+**v0.6.0.** On a fresh server, `--restore` rebuilds a console from a Cluster backup in Object Storage: projects, apps with their volume data, members, settings and history.
+
+```bash
+curl -fsSL https://kwerft.dev/v0.6.0-rc.1/install.sh | sudo bash -s -- --config /root/kwerft.yaml --restore latest --yes
+```
+
+The config file needs a `backups:` block (see [Config file](#config-file)):
+
+```yaml
+backups:
+  endpoint: https://fsn1.your-objectstorage.com
+  bucket: acme-kwerft
+  prefix: ops.example.com
+  accessKeyFile: /root/s3.access
+  secretKeyFile: /root/s3.secret
+  recoveryKeyFile: /root/kwerft-recovery-key.txt
+```
+
+The installer runs the usual stages, then **Restore** before the Kwerft stage. It waits up to 10 minutes for Velero to read the bucket and up to 4 hours for the restore itself. The console keeps the hostname from the backup unless `--domain` says otherwise; everyone signs in with their existing accounts, and no setup token is created.
+
+`--restore` is refused (exit code 2) on a server that already runs Kwerft, with `--lite`, and with `--agent`, `--join`, `--uninstall` or `--reset-firewall`. If the restore fails, the installer stops with exit code 60; run the same command again to continue. The full procedure and its limits are on [Backups](/docs/backups#restore-the-whole-console-onto-a-new-server).
 
 ## Exit codes
 
@@ -211,6 +272,7 @@ Exit codes are a stable contract for automation:
 | 30 | Kubernetes: k3s did not install or become ready |
 | 40 | Platform: Cilium, cert-manager, Traefik, monitoring or a Hetzner component failed |
 | 50 | Kwerft: the release is not published, or the Kwerft chart failed |
+| 60 | Restore (v0.6.0): the backup could not be read or restored; see [Troubleshooting](/docs/troubleshooting#a-restore-fails-with-exit-code-60) |
 
 ## Firewall rescue
 
@@ -232,11 +294,11 @@ This removes k3s with every workload on the server and the data on its local vol
 
 A Hetzner Cloud Firewall or Load Balancer that Kwerft created stays in your Hetzner project. Turn them off in Settings before you uninstall, or delete them in the Hetzner Console afterwards.
 
-There are no backups yet (they are planned before the public beta): uninstalling deletes your apps' data.
+Uninstalling deletes your apps' data. From v0.6.0, Kwerft can [back it up](/docs/backups) to Object Storage first; a backup in the bucket is not touched by an uninstall.
 
 ## Pinned components
 
-Each release pins the versions it installs at the top of the script. v0.4.0 and v0.5.0-rc.2 pin:
+Each release pins the versions it installs at the top of the script. v0.6.0-rc.1 pins the following; v0.4.0 and the v0.5.0 release candidates pin the same versions of the components they have.
 
 | Component | Version |
 |---|---|
@@ -254,3 +316,7 @@ Each release pins the versions it installs at the top of the script. v0.4.0 and 
 | Railpack | v0.40.1 |
 | hcloud CSI chart (v0.5.0) | 2.23.0 |
 | hcloud cloud-controller-manager chart (v0.5.0) | 1.38.0 |
+| system-upgrade-controller (v0.6.0) | v0.20.2 |
+| Velero (v0.6.0) | v1.18.4 |
+| Velero chart (v0.6.0) | 12.2.0 |
+| velero-plugin-for-aws (v0.6.0) | v1.14.4 |

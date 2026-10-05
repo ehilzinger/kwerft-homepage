@@ -69,13 +69,16 @@ To quiet an alert while you work on it, click **Silence 1 h** or **Silence 24 h*
 | certificate-expiring | A certificate expires within 14 days | warning |
 | schedule-failing | A scheduled job failed | warning |
 | build-failing | An app's latest build failed | warning |
+| backup-failing | **v0.6.0.** A backup plan's latest backup failed | critical |
+| backup-missing | **v0.6.0.** A backup plan has not completed a backup within twice its interval | critical |
+| upgrade-failed | **v0.6.0.** The latest upgrade of Kwerft or Kubernetes failed or was rolled back; fires for a day, or until the next upgrade succeeds | critical |
 
-Default rules notify nobody until you add a channel and pick it in the rule. You can change them, or switch them off with the **On** switch. A deleted default rule comes back within a minute with its default settings.
+The backup and upgrade rules are platform alerts; see [Backups](/docs/backups#alerts) and [Upgrades](/docs/upgrades#alerts). Default rules notify nobody until you add a channel and pick it in the rule. You can change them, or switch them off with the **On** switch. A deleted default rule comes back within a minute with its default settings.
 
 To add your own, click **New rule**:
 
 1. **Name**, shown on alerts and notifications. It cannot change later.
-2. **Condition:** one of crash looping, restarts, memory high, CPU high, volume filling up, node memory low, node disk low, certificate expiring, schedule failing, build failing, HTTP errors (share of 5xx responses), slow responses (95th percentile), or a **Custom expression** in MetricsQL.
+2. **Condition:** one of crash looping, restarts, memory high, CPU high, volume filling up, node memory low, node disk low, certificate expiring, schedule failing, build failing, HTTP errors (share of 5xx responses), slow responses (95th percentile), from v0.6.0 backup failing, backup missing and upgrade failed, or a **Custom expression** in MetricsQL.
 3. The condition's threshold, window and how long it must hold (**For**). Empty fields take the defaults shown.
 4. **Applies to:** everything, or chosen projects and apps.
 5. **Severity:** **Critical** (someone should look now), **Warning** (soon) or **Info** (good to know).

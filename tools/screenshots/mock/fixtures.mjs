@@ -924,3 +924,166 @@ export function roles() {
     ],
   };
 }
+
+// ---- updates, backups, secrets, templates (v0.6) ------------------------------------
+
+/** The version the demo console runs; Settings › Updates offers the next patch. */
+export const VERSION = "0.6.0";
+const K3S = "v1.37.1+k3s1";
+
+const notes061 = `Patch release.
+
+- Backups: a plan's next run is shown in the viewer's time zone
+- Node pools: a server that fails its cloud-init is replaced once, then reported
+- Secrets: Copy to… keeps the set's description`;
+
+const upgradeOf = (now, o) => ({
+  requestedBy: "mara@example.com", auto: false, preflight: [], steps: [], nodes: [], cancellable: false, finished: true, phase: "Succeeded", ...o,
+});
+
+export function upgradeHistory(now, cluster = "local") {
+  const local = [
+    upgradeOf(now, {
+      name: "kubernetes-v1-37-1-k3s1-x2d9q", cluster: "local", component: "Kubernetes", version: K3S, from: { kubernetes: "v1.36.6+k3s1" },
+      nodes: ["fsn1-cp-1", "fsn1-workers-7k2mx", "fsn1-workers-q9xdt", "ax42-db-1"].map((n) => ({ name: n, version: K3S, state: "Done" })),
+      backup: { etcdSnapshot: "pre-kubernetes-v1-37-1-k3s1-x2d9q" },
+      createdAt: ago(now, 6 * DAY + 2 * HOUR), startedAt: ago(now, 6 * DAY + 2 * HOUR), finishedAt: ago(now, 6 * DAY + 1 * HOUR + 22 * MIN),
+    }),
+  ];
+  const staging = [
+    upgradeOf(now, {
+      name: "kubernetes-v1-37-1-k3s1-h7m3c", cluster: "hel1-staging", component: "Kubernetes", version: K3S, from: { kubernetes: "v1.36.6+k3s1" },
+      nodes: ["hel1-staging-cp-1", "hel1-staging-workers-m4rt2", "hel1-staging-workers-x8kpz"].map((n) => ({ name: n, version: K3S, state: "Done" })),
+      createdAt: ago(now, 8 * DAY), startedAt: ago(now, 8 * DAY), finishedAt: ago(now, 8 * DAY - 31 * MIN),
+    }),
+  ];
+  return cluster === "hel1-staging" ? staging : local;
+}
+
+export function updates(now) {
+  const avail = [
+    { component: "Kwerft", version: "0.6.1", kind: "Patch", notes: notes061, allowed: true },
+    { component: "Kubernetes", version: "v1.37.2+k3s1", kind: "Patch", allowed: true },
+  ];
+  // The next Saturday, 03:00 in Berlin (01:00 UTC in summer time).
+  const d = new Date(now);
+  d.setUTCDate(d.getUTCDate() + ((6 - d.getUTCDay() + 7) % 7 || 7));
+  d.setUTCHours(1, 0, 0, 0);
+  return {
+    policy: { policy: "AutoPatch", channel: "stable", kubernetesPatches: false, window: { days: ["Sat", "Sun"], start: "03:00", duration: "2h", timeZone: "Europe/Berlin" } },
+    checkedAt: ago(now, 38 * MIN), checking: false, nextWindow: d.toISOString(), windowOpen: false,
+    current: { kwerft: VERSION, kubernetes: K3S },
+    available: avail,
+    clusters: [
+      { name: "local", connected: true, kwerft: VERSION, kubernetes: K3S, available: avail, upgradable: true },
+      { name: "hel1-staging", connected: true, kwerft: VERSION, kubernetes: K3S, available: avail, upgradable: true },
+    ],
+    canUpgrade: true,
+    upgradeAll: { version: "0.6.1", console: true, clusters: ["hel1-staging"], skipped: [] },
+  };
+}
+
+export function backupTarget(now) {
+  return {
+    configured: true, endpoint: "https://fsn1.your-objectstorage.com", region: "fsn1", bucket: "example-shop-backups", prefix: "console.example.com",
+    defaultPrefix: "console.example.com", credentialsSet: true, recoveryKeySet: true, recoveryKeyCreatedAt: ago(now, 41 * DAY),
+    etcdSnapshots: { enabled: true, schedule: "0 */6 * * *", retention: 28 },
+    state: "Ready", checkedAt: ago(now, 4 * MIN), lastSuccessfulAt: ago(now, 52 * MIN),
+    etcdUploads: [{ node: "fsn1-cp-1", name: "etcd-snapshot-fsn1-cp-1-1791165600", uploadedAt: ago(now, 2 * HOUR + 11 * MIN), checkedAt: ago(now, 4 * MIN), stored: 28 }],
+  };
+}
+
+/** Velero-style backup names, <plan>-<UTC time it started>, so they match the relative times. */
+const stamp = (now, s) => new Date(now - s * 1000).toISOString().replace(/[-:T]/g, "").slice(0, 14);
+
+const run = (now, name, startedS, minutes, items) => ({
+  name, phase: "Completed", startedAt: ago(now, startedS), completedAt: ago(now, startedS - minutes * MIN), items, warnings: 0, errors: 0,
+});
+
+export function backupPlans(now) {
+  const nextHour = new Date(Math.ceil(now / 3600_000) * 3600_000).toISOString();
+  const next3 = new Date(now);
+  next3.setUTCHours(3, 0, 0, 0);
+  if (next3.getTime() <= now) next3.setUTCDate(next3.getUTCDate() + 1);
+  return [
+    {
+      name: "cluster", scope: "Cluster", projects: [], schedule: "0 3 * * *", retention: "14d", volumes: true, paused: false,
+      nextRunAt: next3.toISOString(), lastSuccessfulAt: ago(now, 15 * HOUR), lastBackup: run(now, `cluster-${stamp(now, 15 * HOUR)}`, 15 * HOUR, 9, 1284), backups: 14, ready: true,
+    },
+    {
+      name: "shop-hourly", scope: "Projects", projects: ["shop"], schedule: "0 * * * *", retention: "2d", volumes: true, paused: false,
+      nextRunAt: nextHour, lastSuccessfulAt: ago(now, 52 * MIN), lastBackup: run(now, `shop-hourly-${stamp(now, 52 * MIN)}`, 52 * MIN, 3, 412), backups: 48, ready: true,
+    },
+    {
+      name: "internal-weekly", scope: "Projects", projects: ["internal"], schedule: "30 2 * * 0", retention: "90d", volumes: false, paused: true,
+      lastSuccessfulAt: ago(now, 13 * DAY), lastBackup: run(now, `internal-weekly-${stamp(now, 13 * DAY)}`, 13 * DAY, 2, 96), backups: 6, ready: true,
+    },
+  ];
+}
+
+export function backups(now) {
+  const GB = 1024 ** 3;
+  const b = (plan, scope, projects, startedS, minutes, items, bytes, extra = {}) => ({
+    name: `${plan}-${stamp(now, startedS)}`, plan, scope, phase: "Completed", projects, volumes: true, startedAt: ago(now, startedS), completedAt: ago(now, startedS - minutes * MIN),
+    expiresAt: ago(now, startedS - (plan === "cluster" ? 14 : 2) * DAY), items, totalItems: items, warnings: 0, errors: 0, bytes, restorable: true, ...extra,
+  });
+  return {
+    velero: true,
+    backups: [
+      b("shop-hourly", "Projects", ["shop"], 52 * MIN, 3, 412, 6.8 * GB),
+      b("shop-hourly", "Projects", ["shop"], HOUR + 52 * MIN, 3, 412, 6.8 * GB),
+      b("shop-hourly", "Projects", ["shop"], 2 * HOUR + 21 * MIN, 4, 409, 6.7 * GB, { requestedBy: "jonas@example.com" }),
+      b("shop-hourly", "Projects", ["shop"], 2 * HOUR + 52 * MIN, 3, 409, 6.7 * GB),
+      b("cluster", "Cluster", ["shop", "internal"], 15 * HOUR, 9, 1284, 23.4 * GB),
+      b("cluster", "Cluster", ["shop", "internal"], 39 * HOUR, 9, 1279, 23.1 * GB),
+      b("cluster", "Cluster", ["shop", "internal"], 63 * HOUR, 8, 1271, 22.9 * GB),
+    ],
+  };
+}
+
+export function restores(now) {
+  return [
+    {
+      name: "uploads-from-shop-hourly-x81kq", backup: `shop-hourly-${stamp(now, 6 * DAY + 3 * HOUR + 40 * MIN)}`, project: "shop", targetProject: "shop-restore", apps: ["uploads"],
+      phase: "Completed", warnings: 0, errors: 0, createdAt: ago(now, 6 * DAY + 3 * HOUR), startedAt: ago(now, 6 * DAY + 3 * HOUR), completedAt: ago(now, 6 * DAY + 2 * HOUR + 51 * MIN),
+      requestedBy: "jonas@example.com",
+    },
+  ];
+}
+
+export function secretSets(now, project) {
+  const k = (name, s, by = "priya@example.com", source = "Set") => ({ name, updatedAt: ago(now, s), updatedBy: by, source });
+  const sets = {
+    shop: [
+      {
+        name: "payments", project: "shop", description: "Stripe keys for checkout and the webhook", generate: [], derived: [],
+        keys: [k("STRIPE_SECRET_KEY", 34 * DAY, "mara@example.com"), k("STRIPE_WEBHOOK_SECRET", 34 * DAY, "mara@example.com")],
+        usedBy: ["App/payments", "App/storefront"], missing: [], phase: "ready", created: ago(now, 120 * DAY), resourceVersion: "81233",
+      },
+      {
+        name: "postgres", project: "shop", description: "The shop database's password and connection string",
+        generate: ["POSTGRES_PASSWORD"], derived: [{ key: "DATABASE_URL", template: "postgres://shop:${POSTGRES_PASSWORD}@postgres:5432/shop" }],
+        keys: [k("POSTGRES_PASSWORD", 180 * DAY, "kwerft", "Generated"), k("DATABASE_URL", 180 * DAY, "kwerft", "Derived")],
+        usedBy: ["App/postgres", "App/api", "App/worker", "Schedule/reports"], missing: [], phase: "ready", created: ago(now, 180 * DAY), resourceVersion: "80410",
+      },
+      {
+        name: "mail", project: "shop", description: "SMTP for order confirmations", generate: [], derived: [],
+        keys: [k("SMTP_USER", 12 * MIN, "tomas@example.com")],
+        usedBy: ["App/worker"], missing: ["App/worker: SMTP_PASSWORD"], phase: "missing", reason: "KeysMissing", message: "SMTP_PASSWORD is referenced but not set.",
+        created: ago(now, 12 * MIN), resourceVersion: "91877",
+      },
+      {
+        name: "storefront-env", project: "shop", app: "storefront", description: "Secret variables of storefront", generate: [], derived: [],
+        keys: [k("SESSION_SECRET", 64 * DAY, "kwerft", "Generated"), k("ALGOLIA_ADMIN_KEY", 9 * DAY, "sam@example.com")],
+        usedBy: ["App/storefront"], missing: [], phase: "ready", created: ago(now, 64 * DAY), resourceVersion: "88102",
+      },
+    ],
+    internal: [
+      {
+        name: "metabase", project: "internal", description: "Metabase's application database", generate: ["MB_DB_PASS"], derived: [],
+        keys: [k("MB_DB_PASS", 140 * DAY, "kwerft", "Generated")], usedBy: ["App/metabase"], missing: [], phase: "ready", created: ago(now, 140 * DAY), resourceVersion: "61002",
+      },
+    ],
+  };
+  return sets[project] ?? [];
+}

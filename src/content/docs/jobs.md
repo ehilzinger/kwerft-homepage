@@ -2,7 +2,7 @@
 title: Jobs
 description: Run one-off tasks from an app or a schedule, put jobs on a cron schedule, and follow every run with its exit code and logs.
 group: Run apps
-order: 3
+order: 4
 ---
 
 Jobs are workloads that run to completion: a database migration, a nightly backup, an hourly import. Kwerft has two kinds. A **task** is one run. A **schedule** starts a task on a cron schedule. Every scheduled run is a task too, so scheduled and manual runs look the same in the console.
@@ -60,12 +60,18 @@ It then shows up on the Jobs page like any other run.
    - **Wait for it** (the default): the due run starts once the earlier one finishes, within an hour; otherwise it is skipped.
    - **Stop it:** the earlier run is cancelled and the new one starts.
    - **Run both:** runs overlap; make sure the job tolerates that.
-8. Under **Limits & history**, set a **Timeout** for each run (all retries included), **Retries**, how many succeeded and failed runs to keep (3 each by default), the **Size** and **Outbound access**.
+8. Under **Limits & history**, set a **Timeout** for each run (all retries included), **Retries**, **Time to stop** (see below), how many succeeded and failed runs to keep (3 each by default), the **Size** and **Outbound access**.
 9. Under **On success**, pick apps in the same project to restart once a run succeeds (see below).
 
 The page also shows the schedule as YAML (**Schedule as YAML**).
 
 If the server was down when a run was due, only the latest missed run starts, and only within an hour of when it was due.
+
+### Time to stop
+
+**Time to stop** (v0.6.0) is how many seconds a run gets to finish after it is told to stop (cancelled, its timeout reached, or its server drained) before it is killed: the run receives SIGTERM, then SIGKILL once the time is up. The default is 30 seconds, the range 1 to 3600. Give a job that flushes or checkpoints its work on SIGTERM the time it needs. A run's page shows the value.
+
+One-off tasks started with **Run as job** use the default; a `Task` resource takes `stopSeconds`.
 
 ## Restart an app when a job succeeds
 
@@ -78,7 +84,7 @@ The **Jobs** page lists:
 - **Schedules:** image or source app, next run, last run, what it restarts on success, and an **Active** switch. Switch it off to suspend the schedule: no new runs start until you switch it back on.
 - **Recent runs:** who or what started each one, when, how long it took, its exit code and status.
 
-Open a run to see its status, exit code, duration, image, command, size, timeout, retries, environment and overrides, and its **Logs**, live while it runs and afterwards. A running task has a **Shell** button, like an app's replicas. **Cancel run** stops it and keeps the record; **Run again** starts the same task anew; **Delete** removes the run and its logs.
+Open a run to see its status, exit code, duration, image, command, size, timeout, retries, time to stop, environment and overrides, and its **Logs**, live while it runs and afterwards. A running task has a **Shell** button, like an app's replicas. **Cancel run** stops it and keeps the record; **Run again** starts the same task anew; **Delete** removes the run and its logs.
 
 ## How long runs are kept
 

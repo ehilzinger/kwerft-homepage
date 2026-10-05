@@ -5,7 +5,7 @@ group: Run apps
 order: 1
 ---
 
-An app is a long-running service in a project: an image from any registry, or a Git repository that Kwerft builds for you. This page covers deploying from an image and everything you do with an app afterwards. For apps built from Git, see [Builds from Git](/docs/builds).
+An app is a long-running service in a project: an image from any registry, or a Git repository that Kwerft builds for you. This page covers deploying from an image and everything you do with an app afterwards. For apps built from Git, see [Builds from Git](/docs/builds); for templates and Docker Compose files, see [Templates & Compose](/docs/templates-and-compose).
 
 You need the developer role (or owner or admin) in the project to deploy and change apps. Viewers see everything but cannot change it.
 
@@ -18,26 +18,42 @@ Apps live in projects. If the Apps page says **Start with a project**, an owner 
 1. Open **Apps** and click **Deploy app**.
 2. **Source:** choose **Container image**. Enter the **App name** (it is also the in-cluster hostname), the **Project** and the **Image**, for example `ghcr.io/acme/invoice-renderer:0.3.0`. Pin a version tag or a digest rather than `latest`, so a rollback runs something different.
 3. For a private image, enter the name of a docker-registry Secret in the project under **Registry credential** (see [Secrets](#secrets) below).
-4. **Runtime:** pick a size, the number of replicas, a health check, environment variables and shared volumes.
+4. **Runtime:** pick a size, the number of replicas, a health check, environment variables, secret variables, and shared volumes and secrets.
 5. **Networking:** enter the **Container port**, choose **Cluster only** or **Public domain**, and decide who may connect and what the app may reach.
 6. **Review:** check the App resource (**Copy YAML** keeps a copy) and the list of objects Kwerft will create, then click **Deploy &lt;name&gt;**.
 
-The app opens on its Overview tab while the first replica starts. Docker Compose files and templates (PostgreSQL, Redis and others) are shown in the wizard as **Later**: they are planned, not available yet.
+The app opens on its Overview tab while the first replica starts.
+
+The wizard's other sources are **Git repository** ([Builds from Git](/docs/builds)), and, from v0.6.0, **Docker Compose** and **Template** ([Templates & Compose](/docs/templates-and-compose)). In v0.4.0 and the v0.5.0 release candidates, Compose and templates are shown as **Later**.
 
 ## Environment variables
 
 In the wizard, enter one `KEY=value` per line. Afterwards, edit them on the app's **Settings** tab under **Environment**: **Add variable**, change a value, or **Remove**.
 
-Values are stored in the App resource and are readable by everyone with access to the project. Do not put passwords there.
+Plain values are stored in the App resource and are readable by everyone with access to the project. Do not put passwords there: use secrets.
 
 ### Secrets
 
-Kwerft has no secret store yet; one is planned before the public beta. Until then, keep sensitive values in a Kubernetes Secret and reference it:
+<div class="note">Secret variables need Kwerft v0.6.0, which is in release candidates. For v0.4.0 and v0.5.0, see <a href="#before-v060">Before v0.6.0</a> below.</div>
+
+Each variable on the **Environment** card has a **Source**:
+
+- **Plain:** a value in the App resource.
+- **Secret · this app:** a write-only value in the app's own secret set, `<app>-env`. After saving it shows dots; type to replace it.
+- A key of one of the project's [secret sets](/docs/secrets), listed under **Set &lt;name&gt;**, for values that several apps share.
+
+In the wizard, **Secret variables (KEY=value, one per line)** go into the app's own set. Changing a secret value rolls the app without a new revision. Owners and admins can **Reveal** a value after their password. See [Secrets](/docs/secrets) for generated values, sets shared by several apps, and how values are protected.
+
+#### Before v0.6.0
+
+v0.4.0 and v0.5.0 have no secret store. Keep sensitive values in a Kubernetes Secret and reference it:
 
 1. On the server, as root, create the Secret in the project's namespace, for example `sudo k3s kubectl -n shop create secret generic payments --from-literal=STRIPE_KEY=…`.
 2. Reference it in the App's YAML with `valueFrom.secretKeyRef` and apply it with kubectl.
 
-The Settings tab then shows the variable as `secret · payments/STRIPE_KEY` and keeps it when you save. The console and downloaded kubeconfigs never read Secrets, so this step needs root on the server. The same goes for the docker-registry Secret behind **Registry credential**.
+The Settings tab then shows the variable as `secret · payments/STRIPE_KEY` and keeps it when you save. The console and downloaded kubeconfigs never read Secrets, so this step needs root on the server.
+
+The docker-registry Secret behind **Registry credential** is still created this way in v0.6.0, since secret sets cannot hold one yet: `sudo k3s kubectl -n shop create secret docker-registry ghcr --docker-server=ghcr.io --docker-username=… --docker-password=…`.
 
 ## Ports and public hostnames
 
@@ -47,6 +63,8 @@ The **Container port** is the port your app listens on. Leave it empty for worke
 - **Public domain:** Kwerft adds an HTTPS listener for the hostname, gets a Let's Encrypt certificate and redirects HTTP to HTTPS. If an apps domain is set in Settings, the wizard suggests `<app>.<apps domain>`. See [Domains & TLS](/docs/domains-and-tls) for DNS and certificates.
 
 To add more ports or change hostnames later, use **Settings › Ports**: each row is a container port with an optional **Public hostname** (empty means cluster only). A hostname cannot be claimed by two apps; the older claim wins.
+
+To serve one port under several hostnames, for example while a site moves to a new name, add a row with the same container port and the other hostname. Each hostname gets its own certificate and route, and the app's page lists each under **Reachable at**. The same hostname cannot point at two ports. This needs v0.6.0; earlier releases refuse a port listed twice.
 
 ### Who may connect, and where the app may go
 
@@ -65,6 +83,8 @@ Shared volumes are disks of a project that apps and jobs mount by name.
 
 To mount one, use **Mount a volume** in the deploy wizard or under **Settings › Volumes**: a path, the volume, and optionally **Read-only**. Every pod that mounts a volume runs on the same node. **Resize** grows a Cloud Volume online; volumes never shrink. A volume that is still mounted is not deleted until nothing uses it.
 
+**Mount a secret as files** (v0.6.0), in the same place, mounts a secret read-only, one file per key: a path, the secret's name (a [secret set](/docs/secrets#mount-a-secret-as-files) works), and the permission, **Readable by all (0444)** or **Owner only (0400)**. Until the secret exists, new replicas wait.
+
 An app can also have a disk per replica, which makes it a StatefulSet. There is no form for that yet: add `volumes: [{path: /data, size: 10Gi}]` to the App's YAML. The Settings tab shows such disks but cannot change them.
 
 ## Replicas and resources
@@ -81,7 +101,7 @@ Under **Settings › Health & draining**:
 
 Rollouts start the new replica first and stop an old one only after that. Set a health check for every app that serves traffic.
 
-<div class="note">The drain setting is newer than the v0.5.0 release candidates. In v0.4.0 and v0.5.0-rc.2 this card is called <b>Health check</b> and has no drain field.</div>
+<div class="note">The drain setting is in v0.5.0-rc.3 and later, including v0.6.0-rc.1. In v0.4.0 and earlier release candidates this card is called <b>Health check</b> and has no drain field.</div>
 
 ## Revisions, rollback and restart
 

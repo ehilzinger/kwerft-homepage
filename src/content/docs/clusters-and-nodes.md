@@ -7,7 +7,7 @@ order: 4
 
 You start with one server, which is the cluster `local`. From **Clusters & nodes** you can add servers to it, make its control plane highly available, and connect more clusters, in other locations or on other servers, to the same console. Owners and admins manage clusters and nodes; other roles only see which cluster a project runs in.
 
-<div class="note">Everything on this page needs Kwerft v0.5.0, which is in release candidates. The default install command installs v0.4.0; to try these features, <a href="/docs/installer#pin-a-version">pin v0.5.0-rc.2</a>. They are tested on Hetzner Cloud servers and with simulated Hetzner APIs; a cluster that keeps serving apps while it loses a node is still being verified on real servers.</div>
+<div class="note">Everything on this page needs Kwerft v0.5.0, which is in release candidates. The default install command installs v0.4.0; to try these features, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.1</a>, the newest release candidate, which contains them. They are tested on Hetzner Cloud servers and with simulated Hetzner APIs; a cluster that keeps serving apps while it loses a node is still being verified on real servers.</div>
 
 ## Connect Hetzner Cloud
 
@@ -67,7 +67,8 @@ The console's own server must be in a Hetzner Cloud Network for pools of the `lo
 
 - **Scale** changes the count. Scaling down drains and deletes the newest servers first (broken ones before them).
 - Changing the server type adds a new server first, then drains and deletes an old one, one at a time.
-- A worker or build node that stays NotReady for 15 minutes is drained and replaced. A server that never becomes a node within 20 minutes is marked failed, not deleted: **Replace** deletes it and creates a new one. Its log is `/var/log/kwerft-join.log` on that server.
+- A worker or build node that stays NotReady for 15 minutes is drained and replaced. From v0.6.0-rc.1, Kwerft replaces one broken server at a time, and none while most of the cluster's nodes are NotReady, since that points at the cluster or its network rather than at the servers. A server that never becomes a node within 20 minutes is marked failed, not deleted: **Replace** deletes it and creates a new one. Its log is `/var/log/kwerft-join.log` on that server.
+- While an [upgrade](/docs/upgrades) of the cluster runs, node pool changes wait for it. New servers install the k3s version the cluster runs, not the one the release pins.
 - Deleting a pool drains its servers one by one and deletes them at Hetzner. Data on their local volumes is lost.
 
 Kwerft only ever deletes Cloud servers that carry its labels for that cluster and pool.
@@ -135,7 +136,7 @@ curl -fsSL https://kwerft.dev/v<console version>/install.sh | sudo bash -s -- --
 
 The command downloads the installer of the console's own version, so the server gets the same release as the console.
 
-<div class="warn">A console on v0.5.0-rc.3 or earlier shows a command that downloads <code>…/main/install.sh</code>, the latest stable script, which is still v0.4.0's: it does not know <code>--agent</code> and stops with "Unknown option". Replace the URL with the console's own script, for example <code>https://kwerft.dev/v0.5.0-rc.2/install.sh</code>, and keep the rest. Later versions show the right URL.</div>
+<div class="warn">A console on v0.5.0-rc.3 or earlier shows a command that downloads <code>…/main/install.sh</code>, the latest stable script, which is still v0.4.0's: it does not know <code>--agent</code> and stops with "Unknown option". Replace the URL with the console's own version's script, <code>https://kwerft.dev/v&lt;console version&gt;/install.sh</code>, and keep the rest. Consoles on v0.6.0-rc.1 and later show the right URL.</div>
 
 It installs the same stack as a normal install (k3s, Cilium, Traefik, cert-manager, monitoring) without a console, and the cluster appears under Clusters within a minute. All it needs is outbound HTTPS to the console. More servers join it from its own Nodes tab.
 
@@ -146,11 +147,13 @@ It installs the same stack as a normal install (k3s, Cilium, Traefik, cert-manag
 - **Monitoring:** each cluster keeps its own metrics, logs and alerts, which the console reads through the agent.
 - **DNS:** apps in a remote cluster can use names under the console's apps domain, and the console points their DNS records at that cluster. See [Domains & TLS › Remote clusters](/docs/domains-and-tls#remote-clusters).
 - If a cluster cannot be reached, the console says so and shows the rest.
+- **Upgrades:** from v0.6.0, a connected cluster's Kwerft and Kubernetes are upgraded from the console's **Settings › Updates**, and **Upgrade all** takes every cluster along after the console. See [Upgrades › Connected clusters](/docs/upgrades#connected-clusters).
+- **Backups** (v0.6.0) cover the cluster `local` only; connected clusters are not backed up yet.
 
 A cluster's **Overview** shows its health, Kubernetes and Kwerft versions, and where its agent connects from. **Rotate agent token** gives you a new install command and disconnects the old agent; re-run the command on one of the cluster's servers. **Delete** disconnects the agent and revokes its token. For a cluster created on Hetzner Cloud it also deletes every server, with all projects, apps and data on them. For an adopted cluster it deletes only the Cloud servers Kwerft created for its node pools; the other servers keep running, without a console.
 
 ## Limits
 
-- The console itself runs as a single replica on the `local` cluster; the console is unavailable while that cluster's control plane is down.
+- The console itself runs as a single replica on the `local` cluster; the console is unavailable while that cluster's control plane is down. From v0.6.0 it can be [rebuilt on a new server](/docs/backups#restore-the-whole-console-onto-a-new-server) from a backup, as a single server.
 - Agents reconnect within about a minute after the console restarts.
 - Kwerft for Mac, which runs the same projects in a local cluster on a Mac, is planned after the public beta.

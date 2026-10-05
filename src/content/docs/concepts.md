@@ -1,6 +1,6 @@
 ---
 title: Concepts
-description: Projects, apps, jobs, volumes, domains and clusters, how a change in the console reaches Kubernetes, and how to leave the console when you need to.
+description: Projects, apps, jobs, volumes, secrets, domains and clusters, how a change in the console reaches Kubernetes, and how to leave the console when you need to.
 group: Start
 order: 2
 ---
@@ -27,6 +27,10 @@ A task is a one-off run to completion, such as a migration or an import. A sched
 
 A volume is a disk in a project that apps and jobs mount by name: a job writes a file, a server reads it. Volumes live on the server's local NVMe disk, or as Hetzner Cloud Volumes on Cloud servers. See [Apps › Volumes](/docs/apps#volumes).
 
+### Secret sets
+
+A secret set is a named group of keys in a project, such as passwords and API keys. Apps and jobs use its values as environment variables or files; developers write values but never read them back. Kwerft can generate values and derive others from them, such as a connection string from a password. Secret sets need v0.6.0, which is in release candidates. See [Secrets](/docs/secrets).
+
 ### Domains
 
 When you give an app's port a public hostname, Kwerft claims that hostname, adds an HTTPS listener and gets a Let's Encrypt certificate. The console's own hostname and an optional apps domain (so apps get names like `invoices.apps.example.com`) are set under Settings. See [Domains & TLS](/docs/domains-and-tls).
@@ -34,6 +38,10 @@ When you give an app's port a public hostname, Kwerft claims that hostname, adds
 ### Clusters and nodes
 
 The server you installed on is the cluster `local`. You can add servers to it as nodes, and connect more clusters to the same console; each runs Kwerft's controllers itself and dials out to the console, so its Kubernetes API stays private. See [Clusters & nodes](/docs/clusters-and-nodes).
+
+### Backups and upgrades
+
+From v0.6.0, Kwerft backs up projects, their volumes and its own state to an S3 bucket, encrypted with a recovery key you keep a copy of, and can rebuild the whole console on a new server from it. It also upgrades itself from the console, rolling back by itself when an upgrade fails, and upgrades Kubernetes node by node. See [Backups](/docs/backups) and [Upgrades](/docs/upgrades).
 
 ## Kubernetes is the source of truth
 
@@ -44,6 +52,7 @@ The console keeps no copy of your apps. Its own small database (SQLite) holds pe
 | `Project` | A namespace with quota, Pod Security level, default-deny network policy and role bindings |
 | `App` | A Deployment (or a StatefulSet when each replica has its own disk), a Service, HTTP routes and a network policy |
 | `Volume` | A PersistentVolumeClaim that apps and tasks mount |
+| `SecretSet` | A Kubernetes Secret with write-only values, and the roles that let developers write but not read it (v0.6.0) |
 | `Task`, `Schedule` | Kubernetes Jobs, started once or on a cron schedule |
 | `Build` | A rootless BuildKit job that pushes to the in-cluster registry |
 | `GitConnection` | Credentials and webhooks for a Git host |
@@ -51,8 +60,10 @@ The console keeps no copy of your apps. Its own small database (SQLite) holds pe
 | `TrafficRule` | Cilium network policies between apps, projects and the internet |
 | `FirewallRule` | Rules in the servers' host firewall |
 | `AlertRule`, `NotificationChannel` | Alert rules and where notifications go |
-| `ConsoleSettings` | The console hostname, apps domain and certificate method |
+| `ConsoleSettings` | The console hostname, apps domain and certificate method; from v0.6.0 also the backup target and the update policy |
 | `Cluster`, `NodePool` | Connected clusters and groups of Hetzner Cloud servers |
+| `BackupPlan`, `Restore` | Velero schedules and restores (v0.6.0) |
+| `Upgrade` | One upgrade of Kwerft or Kubernetes, with its backup, progress and result (v0.6.0) |
 
 Because these are ordinary Kubernetes objects, `kubectl get apps.kwerft.dev -n <project>` shows the same apps the console does, and `kubectl apply` of an App changes it just as the console's form would.
 
@@ -81,13 +92,17 @@ Shells are the one thing kubeconfigs cannot open: `kubectl exec` is refused thro
 
 There are four roles. Owners and admins manage everything; developers deploy and operate apps and jobs in the projects they reach; viewers look. The full matrix is on [Access](/docs/access#roles).
 
-## What is not built yet
+## What is new, and what is not built yet
 
-Kwerft is pre-beta. These are planned before the public beta and not available today:
+Kwerft is pre-beta. The latest release is v0.4.0. The release candidate v0.6.0-rc.1 contains everything from the v0.5.0 candidates and adds what was missing for running Kwerft for real:
 
-- backups of apps and volumes to Hetzner Object Storage (Velero),
-- a secret store for apps (project-scoped secrets with write-only values),
-- importing Docker Compose files and app templates,
-- upgrades with automatic rollback.
+- [backups](/docs/backups) of projects, volumes and the console to Object Storage, encrypted with a recovery key, and a full restore onto a new server,
+- [upgrades from the console](/docs/upgrades) with automatic rollback, and Kubernetes upgrades node by node,
+- [secret sets](/docs/secrets) with write-only values,
+- [templates and the Docker Compose import](/docs/templates-and-compose).
 
-Kwerft for Mac, a native app that runs the same projects locally, is planned after the beta. The license is decided before the public beta.
+Backups and upgrades have been tested against simulated storage and clusters; their end-to-end runs on real servers are still to come. To try the release candidate, [pin v0.6.0-rc.1](/docs/installer#pin-a-version).
+
+Not built yet: a highly available console, backups of connected clusters, and Kwerft for Mac, a native app that runs the same projects locally, which is planned after the beta.
+
+From v0.6.0-rc.1 on, Kwerft is free software under the GNU Affero General Public License v3.0 only (AGPL-3.0-only). The source is public at [github.com/ehilzinger/kwerft](https://github.com/ehilzinger/kwerft).

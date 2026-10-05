@@ -2,7 +2,7 @@
 title: Domains & TLS
 description: The console's hostname and how to move it, an apps domain for your apps, HTTP-01 or wildcard certificates through Hetzner DNS, managed DNS records, and the sslip.io fallback.
 group: Run apps
-order: 4
+order: 6
 ---
 
 Every hostname Kwerft serves gets a Let's Encrypt certificate, and plain HTTP redirects to HTTPS. This page explains the console's own hostname, the apps domain that gives apps names without new DNS records, the two ways certificates are issued, and the DNS records Kwerft can keep for you. Owners and admins change these under **Settings**; everyone else sees them read-only.
@@ -101,7 +101,7 @@ dns:
 
 ## Test servers: Let's Encrypt staging
 
-For servers you reinstall often, `--acme-server staging` takes certificates from Let's Encrypt's staging CA. Browsers do not trust them, but the rate limits are generous. Give the flag on every run. It needs Kwerft v0.5.0, which is in release candidates.
+For servers you reinstall often, `--acme-server staging` takes certificates from Let's Encrypt's staging CA. Browsers do not trust them, but the rate limits are generous. It needs Kwerft v0.5.0, which is in release candidates ([pin v0.6.0-rc.1](/docs/installer#pin-a-version)). With the v0.5.0 candidates, give the flag on every run; from v0.6.0 the server remembers it.
 
 ## Remote clusters
 

@@ -28,18 +28,24 @@ The **Roles** tab shows the full matrix, which Kwerft tests against its Kubernet
 | Build apps from Git and cancel builds | Yes | Yes | Yes | — |
 | Open a shell in a container (recorded) | Yes | Yes | Yes | — |
 | Edit traffic rules | Yes | Yes | Within their projects | — |
+| Create secret sets and set, generate or remove their values (v0.6.0) | Yes | Yes | Within their projects; values cannot be read back | — |
+| Reveal a secret value, after their password (v0.6.0, audited) | Yes | Yes | — | — |
+| Copy a secret set into another project (v0.6.0) | Yes | Yes | — | — |
 | Create and delete projects | Yes | Yes | — | — |
 | Limit a project to its members and manage them | Yes | Yes | — | — |
 | Manage Git connections and their credentials | Yes | Yes | — | — |
 | Create and change alert rules | Yes | Yes | Built-in conditions only | — |
 | Manage notification channels | Yes | Yes | — | — |
+| Configure backups, back up and restore projects (v0.6.0) | Yes | Yes | — | — |
+| Upgrade Kwerft and Kubernetes and change the update policy (v0.6.0) | Yes | — | — | — |
+| See available updates and the upgrade history (v0.6.0) | Yes | Yes | — | — |
 | Silence alerts | Yes | Yes | Alerts of projects, not platform alerts | — |
 | Read Kubernetes Secrets | — | — | — | — |
 | Invite members, change roles, remove members, reset second factors | Yes | Not owners | — | — |
 | Require two-factor sign-in for everyone | Yes | — | — | — |
 | Read the audit log and shell recordings | Yes | Yes | — | — |
 
-Settings, the server firewall, clusters and nodes are for owners and admins. No role reads Secrets through the console.
+Settings, the server firewall, clusters and nodes are for owners and admins. No role reads Secrets through the console; from v0.6.0, owners and admins can reveal a single secret value after their password, and each reveal is audited. See [Secrets](/docs/secrets).
 
 ## Members and invites
 

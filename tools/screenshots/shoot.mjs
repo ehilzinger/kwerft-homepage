@@ -83,6 +83,29 @@ const shots = [
   { name: "network-firewall", path: "/network", act: tab("Server firewall") },
   { name: "clusters", path: "/clusters/hel1-staging" },
   { name: "cluster-nodes", path: "/clusters/local/nodes" },
+  { name: "updates", path: "/settings/updates" },
+  { name: "backups", path: "/backups" },
+  { name: "secrets", path: "/secrets?project=shop" },
+  {
+    name: "templates", path: "/apps/new?project=internal",
+    act: async (page) => {
+      await page.getByRole("button", { name: /^Template/ }).click();
+      await page.locator(".tpl-grid .tpl").first().waitFor();
+      await settle(page);
+    },
+  },
+  {
+    name: "compose", path: "/apps/new?project=shop",
+    act: async (page) => {
+      await page.getByRole("button", { name: /^Docker Compose/ }).click();
+      await page.locator("#c-file").fill(fs.readFileSync(path.join(here, "mock/data/compose-returns.yaml"), "utf8"));
+      await page.getByRole("button", { name: "Check", exact: true }).click();
+      await page.getByText("Kwerft will create").first().waitFor();
+      await settle(page);
+      await page.evaluate(() => document.querySelectorAll("*").forEach((e) => { if (e.scrollTop) e.scrollTop = 0; }));
+      await page.evaluate(() => window.scrollTo(0, 0));
+    },
+  },
   { name: "access-members", path: "/access" },
   { name: "access-audit", path: "/access/audit" },
   { name: "settings", path: "/settings" },

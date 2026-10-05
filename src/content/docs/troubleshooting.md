@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Answers for the problems people run into most, from DNS and certificates to firewall lock-outs, a lost setup token and where to find logs.
+description: Answers for the problems people run into most, from DNS and certificates to firewall lock-outs, a lost setup token, failed upgrades and restores, and where to find logs.
 group: Reference
 order: 2
 ---
@@ -17,6 +17,8 @@ Most problems come down to DNS, a firewall in the way, or a stage that did not f
 | The console | `sudo k3s kubectl -n kwerft-system logs deploy/kwerft` |
 | Your apps and jobs | The app's or run's **Logs** tab, and **Monitoring › Logs** |
 | Who changed what | **Access › Audit log** (owners and admins) |
+| An upgrade (v0.6.0) | **Settings › Updates**, the upgrade's **Show the installer log**; on the server `/var/log/kwerft/install.log` |
+| Backups (v0.6.0) | **Backups**; Velero's log: `sudo k3s kubectl -n velero logs deploy/velero` |
 
 ## The installer stopped
 
@@ -47,7 +49,7 @@ If the name resolves but the certificate still fails, check that TCP port 80 rea
 
 Let's Encrypt issues at most 50 certificates per week per registered domain, and 5 per week for the same hostname. Reinstalling a server again and again with the same names runs into the second limit quickly, and each reinstall issues the console's certificate anew.
 
-- For test servers, install with `--acme-server staging` (from v0.5.0). Staging certificates are not trusted by browsers, but the limits are generous. Give the flag on every run.
+- For test servers, install with `--acme-server staging` (from v0.5.0). Staging certificates are not trusted by browsers, but the limits are generous. From v0.6.0 the server remembers the flag; with earlier releases, give it on every run.
 - Use an apps domain with a DNS-01 wildcard certificate: one certificate covers every app. See [Domains & TLS](/docs/domains-and-tls).
 - Within one install, a hostname that comes back within seven days reuses its old certificate.
 
@@ -112,6 +114,37 @@ One build runs at a time by default; the others wait. With a build pool, the fir
 
 Rules notify only the channels they name. Open the rule under **Monitoring › Alert rules** and pick the channel under **Notify**. **Send test** on the channel shows whether the destination accepts it and the error if not.
 
+## An upgrade failed or rolled back
+
+**v0.6.0.** Open **Settings › Updates** and click the upgrade in **History**. The progress card shows which step failed and why, and **Show the installer log** shows the end of the installer's log.
+
+- **RolledBack:** the installer or a check after it failed, and Kwerft went back to the version before. Apps were not touched. Fix the cause the log names and start the upgrade again.
+- **Failed** during the preflight or backup: nothing was changed. The message says which check failed, such as a node that is not Ready or too little disk (5 GiB free under `/var/lib` is needed).
+- **Failed** after a failed rollback: the message lists the `helm rollback` commands to run on the server, and the names of the database copy and etcd snapshot taken before.
+- A **Kubernetes** upgrade that failed is not rolled back. The nodes that were done stay on the new version, the rest on the old one, which works. See the node's job log with `sudo k3s kubectl -n system-upgrade logs job/<job>`, fix the cause and upgrade again. See [Upgrades › Upgrade Kubernetes](/docs/upgrades#upgrade-kubernetes).
+
+If AutoPatch started the upgrade, AutoPatch is now paused until an owner clicks **Resume AutoPatch**.
+
+A console on v0.4.0 or v0.5.0 has no Updates tab: upgrade it once by re-running the installer of the new version. See [Upgrades](/docs/upgrades#upgrade-from-v04-or-v05).
+
+## Backups fail or the target is "Not working"
+
+**v0.6.0.** The **Backups** card in Settings shows the target's state and the reason.
+
+- **Check connection** names what the bucket refused: a wrong key, a bucket that does not exist, or a store that does not encrypt with SSE-C, which Kwerft requires.
+- "Velero is not installed on this cluster": the server was installed with `--lite`, which leaves Velero out, or the Backups stage has not run. Re-run the installer without `--lite`.
+- A backup that ends **Partially failed** lists its errors on the Backups page; Velero's log has the details. `velero backup logs` does not work with the encrypted bucket.
+
+## A restore fails with exit code 60
+
+**v0.6.0.** `install.sh --restore` stops with exit code 60 when it cannot read or restore the backup. The message says which:
+
+- **Cannot read the backups:** the endpoint, bucket or keys in the `backups:` block are wrong, or the bucket is unreachable.
+- **No complete Cluster backup:** check `backups.prefix` (it must be the prefix Settings showed, by default the old console's hostname). Backups are encrypted with a key derived from the recovery key: with the key file of another console, Velero lists none. Name a backup with `--restore <name>` to pick one yourself.
+- **The restore failed or did not finish:** the message names the Velero restore to inspect, for example `sudo k3s kubectl -n velero get restore <name> -o yaml`.
+
+Fix the cause and run the same command again: it continues with the same restore. `--restore` on a server that already runs Kwerft is refused with exit code 2; use a fresh server, or restore single projects from the console. See [Backups](/docs/backups#restore-the-whole-console-onto-a-new-server).
+
 ## The adopt command fails with "Unknown option: --agent"
 
-The command a console on v0.5.0-rc.3 or earlier shows downloads the stable script, which is still v0.4.0 and has no agent mode. Replace the script URL in the command with the console's own, for example `https://kwerft.dev/v0.5.0-rc.2/install.sh`. Later consoles show their own version's script. See [Clusters & nodes](/docs/clusters-and-nodes#adopt-an-existing-server).
+The command a console on v0.5.0-rc.3 or earlier shows downloads the stable script, which is still v0.4.0 and has no agent mode. Replace the script URL in the command with the console's own version's, `https://kwerft.dev/v<console version>/install.sh`. Consoles on v0.6.0-rc.1 and later show their own version's script. See [Clusters & nodes](/docs/clusters-and-nodes#adopt-an-existing-server).

@@ -26,9 +26,12 @@ Use a fresh server. The installer stops if something already listens on port 80 
 
 The platform itself (k3s, Cilium, Traefik, cert-manager, VictoriaMetrics, VictoriaLogs and Kwerft) uses about 2.5 GB of RAM on an idle server. Each running Git build needs another 1–2 GB. That is why 8 GB is the recommended size.
 
+From v0.6.0, the installer also adds Velero for [backups](/docs/backups): its server and its node agent (one per node) each reserve 128 MiB, and use more while a backup copies volume data (up to 512 MiB and 1 GiB). The system-upgrade-controller for Kubernetes upgrades is small.
+
 The installer refuses servers with less than 4 GB and warns below 8 GB. On a 4 GB server, install with `--lite`:
 
 - Hubble is off, so [traffic rules](/docs/network) show no allowed and dropped counts.
+- Velero is left out, so there are no [backups](/docs/backups) (v0.6.0).
 - Metrics are kept 7 days instead of 30, logs 3 days instead of 14.
 
 That leaves room for a few small apps, not for much else.
@@ -44,6 +47,8 @@ Before it changes anything, the installer's preflight stage also checks that:
 
 A failed check ends the run with exit code 10 (preflight) or 20 (network). See [exit codes](/docs/installer#exit-codes).
 
+[Upgrades from the console](/docs/upgrades) (v0.6.0) also need at least 5 GiB free under `/var/lib` on the server the installer ran on.
+
 ## Network and ports
 
 After the install, the host firewall lets these in from anywhere:
@@ -56,6 +61,8 @@ After the install, the host firewall lets these in from anywhere:
 | UDP 51871 | WireGuard between nodes (Cilium) |
 
 Everything else, including the Kubernetes API on 6443, is only reachable from the server's private network and from pods. You can narrow SSH and open more ports later under [Network › Server firewall](/docs/network#server-firewall).
+
+Outbound, the server needs HTTPS to download k3s, charts and images. From v0.6.0 it also reaches your backup bucket's endpoint, and, unless the update policy is **Off**, `raw.githubusercontent.com` to look for new releases.
 
 If you use a Hetzner Cloud Firewall of your own in front of the server, it must let TCP 80 and 443 in, or certificates cannot be issued and nobody reaches the console.
 
@@ -98,7 +105,8 @@ The installer keeps its changes in files it owns, so you can see exactly what it
 | Registry mirror for images built from Git | `/etc/rancher/k3s/registries.yaml` |
 | AppArmor profile for rootless builds | `/etc/apparmor.d/kwerft-buildkit` |
 | Helm | `/usr/local/bin/helm` |
-| State, setup token, install log | `/var/lib/kwerft`, `/etc/kwerft`, `/var/log/kwerft` |
+| Local etcd snapshots every 6 hours, 28 kept (v0.6.0) | `/etc/rancher/k3s/config.yaml.d/50-kwerft-etcd-snapshots.yaml` |
+| State, remembered settings (`install.env`, v0.6.0), setup token, install log | `/var/lib/kwerft`, `/etc/kwerft`, `/var/log/kwerft` |
 
 With `--harden-ssh` it also writes `/etc/ssh/sshd_config.d/90-kwerft.conf`, which turns off password logins and root password logins. Make sure your SSH key works before you use it.
 

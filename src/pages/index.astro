@@ -2,7 +2,7 @@
 import Base from "../layouts/Base.astro";
 import Screenshot from "../components/Screenshot.astro";
 import Command from "../components/Command.astro";
-import { INSTALL_CMD, INSTALL_DISPLAY, LATEST, RELEASES_URL } from "../site";
+import { INSTALL_CMD, INSTALL_DISPLAY, LATEST, PREVIEW, RELEASES_URL, SOURCE_URL } from "../site";
 import "../styles/home.css";
 import "../styles/support.css";
 
@@ -21,6 +21,20 @@ const features = [
     shots: [{ name: "deploy", tab: "Deploy wizard", alt: "The Deploy an app form with a Git repository selected", url: "ops.example.com/apps/new" }, { name: "app-detail", tab: "App page", alt: "App detail page with replicas, revisions and reachable hostnames", url: "ops.example.com/apps/storefront" }],
   },
   {
+    id: "templates",
+    eyebrow: "Templates & Compose",
+    since: "v0.6",
+    title: "Bring a Compose file, or start from a template",
+    text: "Paste a docker-compose.yml and every service becomes an app, every named volume a Volume. Or pick a ready-made app with pinned versions. Either way you review what Kwerft will create, and what it does differently from Compose, before anything exists.",
+    points: [
+      "Templates for PostgreSQL, Redis, MinIO, n8n and Plausible Analytics, with generated passwords",
+      "Published HTTP ports get an HTTPS hostname under your apps domain",
+      "Passwords from the file go into write-only secret sets, not plain environment",
+      "Warnings for what Compose does that Kubernetes doesn't, like start order and bind mounts",
+    ],
+    shots: [{ name: "compose", tab: "Compose import", alt: "The review of an imported Compose file: four apps, a volume and three secret sets, with warnings per service", url: "ops.example.com/apps/new" }, { name: "templates", tab: "Templates", alt: "The template catalog: MinIO, n8n, Plausible Analytics, PostgreSQL and Redis", url: "ops.example.com/apps/new" }],
+  },
+  {
     id: "jobs",
     eyebrow: "Jobs",
     title: "One-off tasks and cron schedules, next to your services",
@@ -32,6 +46,20 @@ const features = [
       "Jobs run below apps in priority, so a busy server sheds batch work first",
     ],
     shots: [{ name: "jobs", tab: "Jobs", alt: "Jobs page listing schedules and recent runs", url: "ops.example.com/jobs" }],
+  },
+  {
+    id: "secrets",
+    eyebrow: "Secrets",
+    since: "v0.6",
+    title: "Secrets you set once and nobody reads back",
+    text: "Keep API keys and passwords in secret sets per project. Values are write-only: anyone allowed can set, replace or generate them, nobody sees them again. Apps use them as environment variables or as files.",
+    points: [
+      "Generated passwords, and derived keys like a DATABASE_URL that follows its password",
+      "A changed value rolls out the apps that use it",
+      "An app waits for a missing key instead of crash-looping",
+      "Owners and admins can reveal one value at a time, with their password, and it's audited",
+    ],
+    shots: [{ name: "secrets", tab: "Secrets", alt: "Secret sets of the shop project with their keys, who uses them and a missing key", url: "ops.example.com/secrets" }],
   },
   {
     id: "monitoring",
@@ -86,22 +114,38 @@ const features = [
     ],
     shots: [{ name: "cluster-nodes", tab: "Nodes", alt: "Node pools and nodes of the production cluster, including a dedicated server", url: "ops.example.com/clusters/local/nodes" }, { name: "clusters", tab: "Remote cluster", alt: "A remote cluster connected through its agent, with node pools and DNS records", url: "ops.example.com/clusters/hel1-staging" }],
   },
+  {
+    id: "backups",
+    eyebrow: "Backups & upgrades",
+    since: "v0.6",
+    title: "Back up everything, upgrade from the browser",
+    text: "Backups go to Hetzner Object Storage, or any S3 bucket that supports customer-provided keys, encrypted with a recovery key that you keep. Upgrades of Kwerft and Kubernetes start from the console, and a Kwerft upgrade that fails its checks rolls itself back.",
+    points: [
+      "Projects, their volumes, built images and the console's own state, on schedules you choose",
+      "Restore a project or single apps in the console, or the whole cluster onto a new server with one installer command",
+      "A backup before every upgrade; Kubernetes upgrades one node at a time",
+      "Upgrade all clusters in one go, or let AutoPatch install patch releases in a maintenance window",
+    ],
+    shots: [{ name: "backups", tab: "Backups", alt: "Backup plans and the backups in the bucket, each with a Restore button", url: "ops.example.com/backups" }, { name: "updates", tab: "Updates", alt: "Settings › Updates: Kwerft and Kubernetes versions per cluster, release notes and the update policy", url: "ops.example.com/settings/updates" }],
+  },
 ];
+
+const badgeTitle = (since: string) => since === "v0.5" ? "In the v0.5.0 release candidates" : `In the ${PREVIEW} release candidate`;
 
 const stack = [
   { k: "Console", v: "Kwerft — one Go binary: API, reconcilers, the web console, SQLite" },
-  { k: "Platform", v: "VictoriaMetrics · VictoriaLogs · Hubble · rootless BuildKit · zot registry" },
+  { k: "Platform", v: "VictoriaMetrics · VictoriaLogs · Hubble · rootless BuildKit · zot registry · Velero · system-upgrade-controller" },
   { k: "Edge", v: "Traefik on :80/:443 via Gateway API · cert-manager · Let's Encrypt" },
   { k: "Kubernetes", v: "k3s with embedded etcd and secrets encryption · Cilium with WireGuard" },
   { k: "Host", v: "Ubuntu 22.04, 24.04 or 26.04 · nftables firewall · unattended upgrades" },
-  { k: "Hetzner", v: "Cloud API · Robot · DNS · Cloud Volumes · Load Balancers" },
+  { k: "Hetzner", v: "Cloud API · Robot · DNS · Cloud Volumes · Load Balancers · Object Storage" },
 ];
 ---
 <Base title="Kwerft" description="Rent a Hetzner server, run one script, manage containers from the browser. Kwerft installs hardened Kubernetes with a web console on Hetzner Cloud and dedicated servers.">
   <section class="hero">
     <div class="wrap">
       <div class="hero-text">
-        <a class="pill" href={RELEASES_URL}><span>Pre-beta</span>{LATEST} is out · release notes →</a>
+        <a class="pill" href={RELEASES_URL}><span>Pre-beta</span>{LATEST} stable · {PREVIEW} brings backups and upgrades →</a>
         <h1>Rent a Hetzner server, run one script, manage containers from the browser.</h1>
         <p class="lead">Kwerft installs a hardened Kubernetes on a fresh Ubuntu server — Hetzner Cloud or dedicated — and puts a console on top. Deploy images or Git repositories, run jobs, watch it all, and manage domains, networks, nodes and people without writing YAML.</p>
         <div class="hero-cmd"><Command cmd={INSTALL_CMD} display={INSTALL_DISPLAY} /></div>
@@ -173,7 +217,7 @@ const stack = [
       <h2 class="h2">Everything a small team needs to run production</h2>
       <p class="lead">Kwerft is a console for people who'd rather ship than operate Kubernetes. Underneath it's plain, upstream Kubernetes — so nothing you build is trapped.</p>
       <nav class="feature-index" aria-label="Features">
-        {features.map((f) => <a href={`#${f.id}`}><b>{f.eyebrow}{f.since && <span class="badge">{f.since}</span>}</b><span>{f.title}</span></a>)}
+        {features.map((f) => <a href={`#${f.id}`}><b>{f.eyebrow}{f.since && <span class="badge" title={badgeTitle(f.since)}>{f.since}</span>}</b><span>{f.title}</span></a>)}
       </nav>
     </div>
     {features.map((f) => (
@@ -181,7 +225,7 @@ const stack = [
         <div class="wrap">
           <div class="feature-grid">
             <div class="feature-text">
-              <p class="eyebrow">{f.eyebrow}{f.since && <span class="badge" title="In the v0.5.0 release candidate">{f.since}</span>}</p>
+              <p class="eyebrow">{f.eyebrow}{f.since && <span class="badge" title={badgeTitle(f.since)}>{f.since}</span>}</p>
               <h3>{f.title}</h3>
               <p>{f.text}</p>
             </div>
@@ -227,8 +271,11 @@ const stack = [
         <div class="card"><h3>Acts as you</h3><p>The console reaches Kubernetes impersonating the signed-in user. Its own account can't do what you can't.</p></div>
         <div class="card"><h3>Private Kubernetes API</h3><p>Only ports 22, 80 and 443 are public. <code>kubectl</code> goes through the console's proxy with a scoped, expiring token.</p></div>
         <div class="card"><h3>Isolated projects</h3><p>Default-deny network policies between projects, WireGuard between nodes, and a test suite that proves the isolation.</p></div>
-        <div class="card"><h3>Encrypted at rest</h3><p>Kubernetes secrets are encrypted by k3s; second-factor secrets are sealed with a key you can rotate.</p></div>
+        <div class="card"><h3>Encrypted at rest</h3><p>Kubernetes secrets are encrypted by k3s, and secret values are write-only in the console. Second-factor secrets are sealed with a key you can rotate.</p></div>
         <div class="card"><h3>Recorded shells</h3><p>Shell access is role-gated, time-limited and recorded. Every change lands in the audit log.</p></div>
+        <div class="card"><h3>Encrypted backups <span class="badge" title={badgeTitle("v0.6")}>v0.6</span></h3><p>Everything Kwerft writes to the bucket is encrypted with keys derived from a recovery key that you keep. Volume data is encrypted before it leaves the server.</p></div>
+        <div class="card"><h3>Upgrades that check themselves <span class="badge" title={badgeTitle("v0.6")}>v0.6</span></h3><p>A Kwerft upgrade checks the release's checksums first, and only finishes when the console, its certificate and every app are as healthy as before. Otherwise it rolls back.</p></div>
+        <div class="card"><h3>Open source</h3><p>Kwerft is licensed under the AGPL-3.0 and <a href={SOURCE_URL}>its code is on GitHub</a>. Read what runs on your servers.</p></div>
       </div>
       <p class="after"><a href="/docs/security">Read the security model →</a></p>
     </div>
@@ -239,7 +286,8 @@ const stack = [
       <div>
         <p class="eyebrow">Status</p>
         <h2 class="h2">Working today, heading for a public beta</h2>
-        <p class="lead">Kwerft runs production workloads on Hetzner Cloud and dedicated servers already. It's pre-beta: expect fast releases and the occasional rough edge. The license will be settled before the beta.</p>
+        <p class="lead">Kwerft runs production workloads on Hetzner Cloud and dedicated servers already. It's pre-beta: expect fast releases and the occasional rough edge. It's open source under the AGPL-3.0, with <a href={SOURCE_URL}>the code on GitHub</a>.</p>
+        <p class="muted after">The default install command installs the latest stable release, {LATEST}. To try the release candidates, <a href="/docs/installer#pin-a-version">pin {PREVIEW}</a>.</p>
       </div>
       <div class="roadmap">
         <div><h3>Available</h3>
@@ -257,12 +305,17 @@ const stack = [
             <li>Cloud Firewall, Cloud Volumes, Load Balancer</li>
           </ul>
         </div>
-        <div><h3>Next, before the beta</h3>
-          <ul class="todo">
-            <li>Backups to Hetzner Object Storage and full restore</li>
-            <li>A secret store in the console</li>
-            <li>Upgrades with rollback</li>
+        <div><h3>In v0.6 <span class="rc">release candidate</span></h3>
+          <ul class="checks">
+            <li>Encrypted backups and a full restore onto a new server</li>
+            <li>Upgrades of Kwerft and Kubernetes from the console, with rollback</li>
+            <li>Secret sets in the console</li>
             <li>Docker Compose import and templates</li>
+          </ul>
+          <h3 class="after">Next, before the beta</h3>
+          <ul class="todo">
+            <li>A full restore onto a new server, proven on real Hetzner servers</li>
+            <li>Upgrades and a cluster losing a node, tested on real servers</li>
           </ul>
           <h3 class="after">After the beta</h3>
           <ul class="todo">
