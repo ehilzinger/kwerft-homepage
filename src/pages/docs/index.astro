@@ -1,0 +1,27 @@
+---
+import Docs from "../../layouts/Docs.astro";
+import { GROUPS, sortedDocs } from "../../docs";
+const docs = await sortedDocs();
+---
+<Docs title="Docs" description="Guides and reference for installing and running Kwerft on Hetzner servers.">
+  <p>New to Kwerft? Start with <a href="/getting-started">Getting started</a>: it takes you from a bare server to your first app on HTTPS.</p>
+  {GROUPS.map((g) => {
+    const items = docs.filter((d) => d.data.group === g);
+    return items.length > 0 && (
+      <>
+        <h2>{g}</h2>
+        <div class="doc-cards">
+          {items.map((d) => <a href={`/docs/${d.id}`}><b>{d.data.title}</b><span>{d.data.description}</span></a>)}
+        </div>
+      </>
+    );
+  })}
+</Docs>
+<style>
+  .doc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+  .doc-cards a { display: grid; gap: 4px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); text-decoration: none; }
+  .doc-cards a:hover { border-color: var(--accent); }
+  .doc-cards b { color: var(--ink); font-weight: 600; }
+  .doc-cards span { color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+  @media (max-width: 640px) { .doc-cards { grid-template-columns: 1fr; } }
+</style>

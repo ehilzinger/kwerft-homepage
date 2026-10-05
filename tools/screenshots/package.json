@@ -1,0 +1,13 @@
+{
+  "name": "kwerft-screenshots",
+  "private": true,
+  "type": "module",
+  "description": "Screenshots of the Kwerft console with demo data, for the homepage.",
+  "scripts": {
+    "shots": "node shoot.mjs",
+    "mock": "node mock/server.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

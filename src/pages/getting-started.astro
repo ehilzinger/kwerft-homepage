@@ -1,0 +1,120 @@
+---
+import Base from "../layouts/Base.astro";
+import Command from "../components/Command.astro";
+import Screenshot from "../components/Screenshot.astro";
+import { INSTALL_CMD, INSTALL_URL, LATEST } from "../site";
+import "../styles/guide.css";
+
+const toc = [
+  ["server", "Get a server"],
+  ["dns", "Point a domain at it"],
+  ["install", "Run the installer"],
+  ["owner", "Create the owner account"],
+  ["apps-domain", "Set an apps domain"],
+  ["deploy", "Deploy your first app"],
+  ["next", "Where to go next"],
+];
+---
+<Base title="Getting started" description="Install Kwerft on a Hetzner server and deploy your first app over HTTPS, in about ten minutes.">
+  <div class="wrap guide">
+    <header class="guide-head">
+      <p class="eyebrow">Getting started</p>
+      <h1>From a bare server to your first app on HTTPS</h1>
+      <p class="lead">About ten minutes, most of it waiting for the installer. You need a Hetzner server you can reach over SSH as root and, ideally, a domain whose DNS you control.</p>
+    </header>
+
+    <div class="guide-body">
+      <nav class="guide-toc" aria-label="Steps">
+        <ol>{toc.map(([id, t]) => <li><a href={`#${id}`}>{t}</a></li>)}</ol>
+      </nav>
+
+      <div class="prose">
+        <section class="step" id="server">
+          <h2><span class="n">1</span>Get a server</h2>
+          <p>Kwerft runs on any Hetzner server with a fresh <strong>Ubuntu 22.04, 24.04 or 26.04</strong>, on amd64 or arm64.</p>
+          <ul>
+            <li><strong>Hetzner Cloud:</strong> create a server with 8 GB of RAM or more (for example a CX33 or CAX21) from the Ubuntu image, and add your SSH key.</li>
+            <li><strong>Dedicated (Robot):</strong> install Ubuntu with <code>installimage</code> from the rescue system.</li>
+          </ul>
+          <p>The platform itself uses about 2.5 GB of memory, so <strong>8 GB is the recommended size</strong>. A 4 GB server works with the <code>--lite</code> flag (no Hubble, shorter metric and log retention) and leaves little room for apps. Ports 80 and 443 must be free.</p>
+          <p class="muted">More on sizing, disks and what the installer changes on the host: <a href="/docs/requirements">Requirements</a>.</p>
+        </section>
+
+        <section class="step" id="dns">
+          <h2><span class="n">2</span>Point a domain at it <span class="opt">optional</span></h2>
+          <p>Pick a hostname for the console, such as <code>ops.example.com</code>, and create an <strong>A record</strong> pointing at the server's public IPv4 address (and an AAAA record for IPv6 if you like). Do this first, so the certificate can be issued during the install.</p>
+          <div class="note"><p><strong>No domain yet?</strong> Leave out <code>--domain</code>. The console gets a temporary <code>&lt;public-ip&gt;.sslip.io</code> hostname with a real certificate, and you can switch to your own domain later under <strong>Settings › Console domain</strong>.</p></div>
+        </section>
+
+        <section class="step" id="install">
+          <h2><span class="n">3</span>Run the installer</h2>
+          <p>SSH into the server and run, with your own hostname and email:</p>
+          <Command cmd={INSTALL_CMD} />
+          <p>The script checks the server, sets up the host firewall, installs k3s, Cilium, Traefik, cert-manager, VictoriaMetrics and VictoriaLogs, then Kwerft. It takes four to five minutes and ends with a summary:</p>
+          <div class="term">
+<pre><span class="g">✓</span> Kwerft          control plane ready · registry zot
+<span class="g">✓</span> Handoff         DNS 203.0.113.24 · token ready
+
+  Open        <span class="a">https://ops.example.com/setup</span>
+  Setup token stored at /etc/kwerft/setup-token <span class="d">(mode 0600, single use, 24 h)</span>
+  Log         /var/log/kwerft/install.log
+
+<span class="g">Done in 4m 12s.</span> <span class="d">Re-run the same command any time to repair or upgrade.</span></pre>
+          </div>
+          <ul>
+            <li><code>--email</code> is optional; Let's Encrypt uses it for expiry notices.</li>
+            <li>Want to see the plan first? Add <code>--dry-run</code> and nothing is changed.</li>
+            <li>The URL always serves the latest stable release. To pin one, use <code>…/kwerft-install/main/{LATEST}/install.sh</code>.</li>
+            <li>Something failed? The script stops with an exit code that says where, and running it again picks up where it left off. See <a href="/docs/troubleshooting">Troubleshooting</a>.</li>
+          </ul>
+        </section>
+
+        <section class="step" id="owner">
+          <h2><span class="n">4</span>Create the owner account</h2>
+          <p>Open the address from the summary. The console stays locked until you prove you control the server, so read the setup token on the server:</p>
+          <Command cmd="sudo cat /etc/kwerft/setup-token" />
+          <p>Paste it into <strong>Setup token</strong>, then enter your name, email and password under <strong>Create the owner account</strong>. The token works once and expires after 24 hours; if it does, re-run the installer for a fresh one.</p>
+          <div class="shot"><Screenshot name="setup" alt="The setup wizard asking for the setup token" url="ops.example.com/setup" sizes="(max-width: 900px) 100vw, 720px" /></div>
+          <p>Once you're in, add a passkey or an authenticator app on your account page (your name at the bottom of the sidebar). Owners can require two-factor sign-in for everyone later.</p>
+        </section>
+
+        <section class="step" id="apps-domain">
+          <h2><span class="n">5</span>Set an apps domain</h2>
+          <p>Apps get hostnames below a base domain, such as <code>storefront.apps.example.com</code>. Set it under <strong>Settings › Apps domain &amp; certificates</strong>, then choose how certificates are issued:</p>
+          <ul>
+            <li><strong>HTTP-01, one certificate per hostname</strong>: create a wildcard record <code>*.apps.example.com</code> pointing at the server. Nothing else to configure.</li>
+            <li><strong>DNS-01 via Hetzner DNS, wildcard certificate</strong>: give Kwerft a Hetzner API token for the project that holds your DNS zone. New apps are live without waiting for a certificate, and Kwerft can keep the DNS records itself (<strong>Settings › DNS records</strong>).</li>
+          </ul>
+          <div class="shot"><Screenshot name="settings" alt="Settings with the console domain, apps domain and certificate options" url="ops.example.com/settings" sizes="(max-width: 900px) 100vw, 720px" /></div>
+          <p class="muted">You can skip this step and give each app a full hostname of its own. Details in <a href="/docs/domains-and-tls">Domains &amp; TLS</a>.</p>
+        </section>
+
+        <section class="step" id="deploy">
+          <h2><span class="n">6</span>Deploy your first app</h2>
+          <p>Go to <strong>Apps › Deploy app</strong>. The wizard has four steps:</p>
+          <ol>
+            <li><strong>Source</strong> — choose a project (create one with <em>New project…</em>), name the app, and pick <strong>Image</strong>. Try <code>traefik/whoami</code>. Or pick <strong>Git</strong> to build a repository; see <a href="/docs/builds">Builds from Git</a>.</li>
+            <li><strong>Runtime</strong> — size, replicas, environment variables and volumes. The defaults are fine for now.</li>
+            <li><strong>Networking</strong> — set <strong>Container port</strong> to <code>80</code> and <strong>Exposure</strong> to <strong>Public domain</strong>. The domain is filled in from your apps domain.</li>
+            <li><strong>Review</strong> — shows the App resource and everything Kwerft will create from it. Deploy.</li>
+          </ol>
+          <div class="shot"><Screenshot name="deploy" alt="The Deploy an app wizard" url="ops.example.com/apps/new" sizes="(max-width: 900px) 100vw, 720px" /></div>
+          <p>The app page shows the rollout, then the address it's reachable at. The first certificate takes a minute or two with HTTP-01 and is immediate with a wildcard. From the same page you can follow logs, open a shell, scale, restart and roll back.</p>
+        </section>
+
+        <section class="step" id="next">
+          <h2><span class="n">7</span>Where to go next</h2>
+          <div class="next-grid">
+            <a href="/docs/access"><b>Invite your team</b><span>Members, roles, project access, SSO</span></a>
+            <a href="/docs/builds"><b>Build from Git</b><span>Connect GitHub, GitLab or Gitea and deploy on push</span></a>
+            <a href="/docs/monitoring"><b>Get alerts</b><span>Add a Slack, email, webhook or ntfy channel</span></a>
+            <a href="/docs/jobs"><b>Schedule jobs</b><span>Backups, reports and migrations</span></a>
+            <a href="/docs/clusters-and-nodes"><b>Add nodes</b><span>Hetzner Cloud servers, dedicated servers, more clusters</span></a>
+            <a href="/docs/access#kubectl"><b>Use kubectl</b><span>A scoped kubeconfig through the console</span></a>
+          </div>
+          <p class="muted after">Installing unattended, for example from cloud-init? Options that take a value also work as <code>KWERFT_Options that take a value also work as <code>KWERFT_&lt;NAME&gt;</code> environment variables, and <code>--yes</code> skips all prompts.lt;NAMEOptions that take a value also work as <code>KWERFT_&lt;NAME&gt;</code> environment variables, and <code>--yes</code> skips all prompts.gt;</code> environment variables, and <code>--yes</code> skips all prompts. See the <a href="/docs/installer">installer reference</a>. The script itself is at <a href={INSTALL_URL}>{INSTALL_URL.replace("https://", "")}</a>.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</Base>

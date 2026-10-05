@@ -1,0 +1,38 @@
+---
+import Logo from "./Logo.astro";
+import { RELEASES_URL } from "../site";
+---
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="about">
+      <a class="brand" href="/"><Logo />Kwerft</a>
+      <p class="foot-blurb">A self-hosted Kubernetes console for Hetzner Cloud and dedicated servers. Pre-beta.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul>
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/#stack">What gets installed</a></li>
+        <li><a href="/#security">Security</a></li>
+        <li><a href="/#roadmap">Roadmap</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Docs</h4>
+      <ul>
+        <li><a href="/getting-started">Getting started</a></li>
+        <li><a href="/docs">Help &amp; guides</a></li>
+        <li><a href="/docs/installer">Installer reference</a></li>
+        <li><a href="/docs/troubleshooting">Troubleshooting</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Releases</h4>
+      <ul>
+        <li><a href={RELEASES_URL}>Release notes</a></li>
+        <li><a href="https://github.com/ehilzinger/kwerft-install">Install script</a></li>
+        <li><a href="https://github.com/ehilzinger/kwerft/pkgs/container/kwerft">Container image</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>

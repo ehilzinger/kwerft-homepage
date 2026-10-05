@@ -1,0 +1,214 @@
+// A mock of the Kwerft API (/api/v1) with demo data, serving a built console
+// next to it. No dependencies: node:http only.
+//
+//   node mock/server.mjs --dist <built console> [--port 8099]
+//
+// A cookie `kwerft-mock=setup` makes the console look freshly installed
+// (setup not complete). Requests the mock does not know answer 404 and are
+// listed at /__mock/misses, so missing fixtures are easy to spot.
+import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import * as fx from "./fixtures.mjs";
+import { cast } from "./terminal.mjs";
+
+const MIME = {
+  ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png",
+  ".ico": "image/x-icon", ".woff2": "font/woff2", ".woff": "font/woff", ".json": "application/json", ".webmanifest": "application/manifest+json",
+};
+
+export function createServer({ dist }) {
+  const misses = [];
+
+  const json = (res, status, body) => {
+    res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    res.end(body === undefined ? "" : JSON.stringify(body));
+  };
+  const noContent = (res) => { res.writeHead(204); res.end(); };
+
+  function sse(res, events, { keepOpenMs = 0 } = {}) {
+    res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store", Connection: "keep-alive" });
+    for (const [name, data] of events) res.write(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`);
+    if (keepOpenMs) setTimeout(() => res.end(), keepOpenMs);
+    else res.end();
+  }
+
+  function api(req, res, url) {
+    const now = Date.now();
+    const p = url.pathname.replace(/^\/api\/v1/, "");
+    const q = url.searchParams;
+    const m = req.method;
+    const fresh = /(?:^|;\s*)kwerft-mock=setup/.test(req.headers.cookie ?? "");
+    let r;
+    const match = (re) => (r = re.exec(p));
+
+    // ---- session and setup
+    if (p === "/version") return json(res, 200, { version: "0.5.0", commit: "4f1c2ab", platform: "cloud" });
+    if (p === "/setup" && m === "GET") return json(res, 200, fresh ? { complete: false, consoleDomain: "203-0-113-10.sslip.io" } : { complete: true, consoleDomain: "console.example.com" });
+    if (p === "/setup/verify") return noContent(res);
+    if (p === "/session" && m === "GET") return fresh ? json(res, 401, { error: "Not signed in." }) : json(res, 200, fx.ME);
+    if (p === "/sso") return json(res, 200, { enabled: true, provider: "google", displayName: "Google Workspace" });
+    if (p === "/account") return json(res, 200, fx.account(now));
+    if (p === "/account/tokens") return json(res, 200, { tokens: [], maxDays: 365, defaultDays: 90 });
+    if (p === "/cluster-status") return json(res, 200, { clusters: [{ name: "local", connected: true }, { name: "hel1-staging", connected: true }] });
+
+    // ---- projects and apps
+    if (p === "/projects") return json(res, 200, fx.projects(now));
+    if (match(/^\/projects\/([^/]+)\/access$/)) {
+      const pr = fx.projects(now).find((x) => x.name === r[1]);
+      return json(res, 200, { project: r[1], access: pr?.access ?? "Team", members: pr?.members ?? [] });
+    }
+    if (p === "/apps") {
+      const list = fx.appSummaries(now);
+      return json(res, 200, q.get("project") ? list.filter((a) => a.project === q.get("project")) : list);
+    }
+    if (match(/^\/projects\/([^/]+)\/apps\/([^/]+)$/)) {
+      const a = fx.appDetail(now, r[1], r[2]);
+      return a ? json(res, 200, a) : json(res, 404, { error: `App ${r[2]} not found.` });
+    }
+    if (match(/^\/projects\/([^/]+)\/apps\/([^/]+)\/pods$/)) return json(res, 200, fx.pods(now, r[1], r[2]));
+    if (match(/^\/projects\/([^/]+)\/apps\/([^/]+)\/metrics$/)) return json(res, 200, fx.appMetrics(now, r[1], r[2], q.get("range") ?? "1h"));
+    if (match(/^\/projects\/([^/]+)\/apps\/([^/]+)\/builds$/)) return json(res, 200, fx.builds(now, r[1], r[2]));
+    if (match(/^\/projects\/([^/]+)\/apps\/([^/]+)\/logs$/)) {
+      const pods = fx.pods(now, r[1], r[2]).pods;
+      const lines = fx.logEntries(now, { project: r[1], app: r[2], limit: 80 });
+      return sse(res, [
+        ["start", { pods: pods.map((x) => x.name), container: r[2], follow: true }],
+        ...pods.map((x) => ["status", { pod: x.name, state: "streaming" }]),
+        ...lines.map((e) => ["line", { pod: e.pod, container: e.container, ts: e.time, text: e.line }]),
+      ], { keepOpenMs: 60_000 });
+    }
+    if (match(/^\/projects\/([^/]+)\/builds\/([^/]+)$/)) {
+      const app = r[2].replace(/-\d+$/, "");
+      const b = fx.builds(now, r[1], app).find((x) => x.name === r[2]);
+      return b ? json(res, 200, b) : json(res, 404, { error: "Build not found." });
+    }
+    if (match(/^\/projects\/([^/]+)\/builds\/([^/]+)\/logs$/)) {
+      return sse(res, [["start", { pods: [`${r[2]}-build`], container: "build", follow: false }], ["line", { pod: `${r[2]}-build`, container: "build", text: "#12 exporting to image done" }], ["end", { reason: "complete" }]]);
+    }
+    if (p === "/git/connections") return json(res, 200, fx.gitConnections(now));
+    if (p === "/git/check" && m === "POST") {
+      return json(res, 200, { ok: true, message: "", defaultBranch: "main", connection: "github-example-shop", dockerfile: true, head: { sha: "b7e41c09d2a35f8e61c0aa93d7f2e1b4c5d6a7e8", message: "Render invoices as PDF/A-3 with embedded XML", author: "Sam Okafor" } });
+    }
+
+    // ---- jobs
+    if (p === "/volumes") return json(res, 200, fx.volumes(now).filter((v) => !q.get("project") || v.project === q.get("project")));
+    if (p === "/volume-classes") return json(res, 200, [{ id: "local-nvme", available: true }, { id: "hcloud-volume", available: true }]);
+    if (p === "/tasks") return json(res, 200, fx.tasks(now).filter((t) => (!q.get("project") || t.project === q.get("project")) && (!q.get("schedule") || t.schedule === q.get("schedule"))));
+    if (match(/^\/projects\/([^/]+)\/tasks\/([^/]+)$/)) {
+      const t = fx.task(now, r[1], r[2]);
+      return t ? json(res, 200, t) : json(res, 404, { error: "Task not found." });
+    }
+    if (match(/^\/projects\/([^/]+)\/tasks\/([^/]+)\/pods$/)) return json(res, 200, { pods: [], metrics: true, access: { logs: true, exec: true } });
+    if (match(/^\/projects\/([^/]+)\/tasks\/([^/]+)\/logs$/)) return sse(res, [["start", { pods: [], container: "task", follow: false, source: "history" }], ["end", { reason: "complete" }]]);
+    if (p === "/schedules") return json(res, 200, fx.schedules(now).filter((s) => !q.get("project") || s.project === q.get("project")));
+    if (p === "/schedules/preview") return json(res, 200, { next: [1, 2, 3].map((d) => new Date(now + d * fx.DAY * 1000).toISOString()), timeZone: q.get("timeZone") || "Europe/Berlin" });
+    if (match(/^\/projects\/([^/]+)\/schedules\/([^/]+)$/)) {
+      const s = fx.schedules(now).find((x) => x.project === r[1] && x.name === r[2]);
+      if (!s) return json(res, 404, { error: "Schedule not found." });
+      return json(res, 200, {
+        apiVersion: "kwerft.dev/v1alpha1", kind: "Schedule",
+        metadata: { name: s.name, namespace: s.project, resourceVersion: "5521", generation: 3, creationTimestamp: s.created },
+        spec: { schedule: s.schedule, timeZone: s.timeZone, suspend: s.suspend, concurrency: s.concurrency, history: { succeeded: 5, failed: 3 }, task: { ...(s.fromApp ? { fromApp: s.fromApp } : { source: { image: { ref: s.image } } }), timeout: "1h0m0s" } },
+        status: { lastScheduleTime: s.lastScheduled, nextScheduleTime: s.nextRun, lastSuccessTime: s.lastSuccess, lastFailureTime: s.lastFailure, active: s.active },
+      });
+    }
+    if (p === "/domains") return json(res, 200, fx.domains(now));
+
+    // ---- monitoring
+    if (p === "/alerts") return json(res, 200, fx.alerts(now, q.get("state") ?? "firing"));
+    if (p === "/alerts/rules") return json(res, 200, fx.alertRules());
+    if (p === "/alerts/channels") return json(res, 200, fx.channels(now));
+    if (p === "/metrics/overview") return json(res, 200, fx.metricsOverview(now, q.get("range") ?? "1h", q.get("cluster") ?? "local"));
+    if (p === "/metrics/query") return json(res, 200, fx.metricsQuery(now, q.get("range") ?? "1h", q.get("query") ?? ""));
+    if (p === "/logs") {
+      const entries = fx.logEntries(now, { project: q.get("project"), app: q.get("app"), level: q.get("level"), query: q.get("query"), limit: Number(q.get("limit") ?? 200) });
+      return json(res, 200, { entries, truncated: false, from: new Date(now - 3600_000).toISOString(), to: new Date(now).toISOString() });
+    }
+    if (p === "/logs/tail") return sse(res, [["start", {}]], { keepOpenMs: 60_000 });
+
+    // ---- infrastructure
+    if (p === "/clusters") return json(res, 200, { clusters: fx.clusters(now) });
+    if (match(/^\/clusters\/([^/]+)$/)) {
+      const c = fx.clusters(now).find((x) => x.name === r[1]);
+      return c ? json(res, 200, c) : json(res, 404, { error: "Cluster not found." });
+    }
+    if (match(/^\/clusters\/([^/]+)\/nodes$/)) return json(res, 200, fx.clusterNodes(now, r[1]));
+    if (p === "/hetzner/catalog") return json(res, 200, fx.catalog());
+    if (p === "/traffic/drops") return json(res, 200, fx.trafficDrops(now));
+    if (match(/^\/projects\/([^/]+)\/traffic$/)) return json(res, 200, fx.trafficFor(now, r[1]));
+    if (p === "/firewall") return json(res, 200, fx.firewall(now));
+
+    // ---- settings
+    if (p === "/settings") return json(res, 200, fx.settings(now, q.get("cluster") ?? "local"));
+    if (p === "/settings/sso") {
+      return json(res, 200, {
+        sso: { enabled: true, provider: "google", issuer: "https://accounts.google.com", clientId: "402917366120-k2l9ab3.apps.googleusercontent.com", displayName: "Google Workspace", allowedDomains: ["example.com"], autoJoin: true, defaultRole: "viewer" },
+        secretSet: true, redirectUrl: "https://console.example.com/api/v1/sso/callback", available: true,
+      });
+    }
+    if (p === "/settings/data-key") return json(res, 200, { available: true, keyId: "dk-2026-04", otherKeyIds: [], sealed: 7, upToDate: 7, canRotate: true, secret: "kwerft-data-key" });
+    if (p === "/settings/passkeys") return json(res, 200, fx.members(now).map((x) => ({ email: x.email, name: x.name, passkeys: x.secondFactor.includes("passkey") ? 1 : 0, totp: x.secondFactor.includes("totp"), recoveryCodes: 10, stranded: false })));
+
+    // ---- access
+    if (p === "/members") return json(res, 200, fx.members(now));
+    if (p === "/invites") return json(res, 200, fx.invites(now));
+    if (p === "/sign-in-policy") return json(res, 200, { requireTwoFactor: true });
+    if (p === "/roles") return json(res, 200, fx.roles());
+    if (p === "/audit") {
+      let list = fx.audit(now);
+      if (q.get("actor")) list = list.filter((e) => e.actor === q.get("actor"));
+      if (q.get("action")) list = list.filter((e) => e.action.startsWith(q.get("action")));
+      return json(res, 200, { entries: list, next: null });
+    }
+    if (p === "/audit/facets") {
+      const list = fx.audit(now);
+      return json(res, 200, { actors: [...new Set(list.map((e) => e.actor))].sort(), actions: [...new Set(list.map((e) => e.action))].sort() });
+    }
+    if (p === "/recordings") return json(res, 200, fx.recordings(now));
+    if (match(/^\/recordings\/([^/]+)$/)) {
+      res.writeHead(200, { "Content-Type": "application/x-asciicast", "Cache-Control": "no-store" });
+      return res.end(cast());
+    }
+
+    misses.push(`${m} ${url.pathname}${url.search}`);
+    console.error(`[mock] no fixture: ${m} ${url.pathname}${url.search}`);
+    return json(res, 404, { error: `The mock has no fixture for ${m} ${p}.` });
+  }
+
+  function file(req, res, url) {
+    let rel = decodeURIComponent(url.pathname);
+    let f = path.join(dist, rel);
+    if (!f.startsWith(dist) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) f = path.join(dist, "index.html");
+    res.writeHead(200, { "Content-Type": MIME[path.extname(f)] ?? "application/octet-stream" });
+    fs.createReadStream(f).pipe(res);
+  }
+
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url, "http://localhost");
+    if (url.pathname === "/__mock/misses") return json(res, 200, misses);
+    if (url.pathname.startsWith("/api/")) {
+      try {
+        return api(req, res, url);
+      } catch (e) {
+        console.error(e);
+        return json(res, 500, { error: String(e) });
+      }
+    }
+    return file(req, res, url);
+  });
+  return { server, misses };
+}
+
+// Run directly: node mock/server.mjs --dist <dir> [--port 8099]
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const arg = (k, d) => {
+    const i = process.argv.indexOf(k);
+    return i > 0 ? process.argv[i + 1] : d;
+  };
+  const dist = path.resolve(arg("--dist", ".cache/console"));
+  const port = Number(arg("--port", 8099));
+  const { server } = createServer({ dist });
+  server.listen(port, "127.0.0.1", () => console.log(`mock console on http://127.0.0.1:${port} (serving ${dist})`));
+}

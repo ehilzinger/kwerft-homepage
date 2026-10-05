@@ -1,0 +1,71 @@
+---
+import Base from "./Base.astro";
+import { GROUPS, sortedDocs } from "../docs";
+
+interface Props {
+  title: string;
+  description: string;
+  current?: string;
+  headings?: { depth: number; slug: string; text: string }[];
+}
+const { title, description, current, headings = [] } = Astro.props;
+const docs = await sortedDocs();
+const i = docs.findIndex((d) => d.id === current);
+const prev = i > 0 ? docs[i - 1] : undefined;
+const next = i >= 0 && i < docs.length - 1 ? docs[i + 1] : undefined;
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const groups = GROUPS.map((g) => ({ g, items: docs.filter((d) => d.data.group === g) })).filter((x) => x.items.length);
+---
+<Base title={title} description={description}>
+  <div class="wrap docs">
+    <aside class="docs-side" aria-label="Documentation">
+      <h4>Start</h4>
+      <ul>
+        <li><a href="/docs" aria-current={!current ? "page" : undefined}>Overview</a></li>
+        <li><a href="/getting-started">Getting started</a></li>
+      </ul>
+      {groups.map(({ g, items }) => (
+        <>
+          {g !== "Start" && <h4>{g}</h4>}
+          <ul>{items.map((d) => <li><a href={`/docs/${d.id}`} aria-current={d.id === current ? "page" : undefined}>{d.data.title}</a></li>)}</ul>
+        </>
+      ))}
+    </aside>
+
+    <article>
+      <nav class="docs-mobile-nav" aria-label="Documentation pages">
+        <select id="docs-jump" aria-label="Go to page">
+          <option value="/docs" selected={!current}>Overview</option>
+          <option value="/getting-started">Getting started</option>
+          {groups.map(({ g, items }) => (
+            <optgroup label={g}>{items.map((d) => <option value={`/docs/${d.id}`} selected={d.id === current}>{d.data.title}</option>)}</optgroup>
+          ))}
+        </select>
+      </nav>
+      <div class="docs-head">
+        {current && <div class="crumbs"><a href="/docs">Docs</a> › {docs[i]?.data.group}</div>}
+        <h1>{title}</h1>
+        <p>{description}</p>
+      </div>
+      <div class="prose"><slot /></div>
+      {current && (
+        <nav class="pager" aria-label="Previous and next page">
+          {prev && <a href={`/docs/${prev.id}`}><small>Previous</small><b>{prev.data.title}</b></a>}
+          {next && <a class="next" href={`/docs/${next.id}`}><small>Next</small><b>{next.data.title}</b></a>}
+        </nav>
+      )}
+    </article>
+
+    {toc.length > 2 && (
+      <nav class="docs-toc" aria-label="On this page">
+        <h4>On this page</h4>
+        <ul>{toc.map((h) => <li class={`d${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}</ul>
+      </nav>
+    )}
+  </div>
+</Base>
+<script>
+  document.getElementById("docs-jump")?.addEventListener("change", (e) => {
+    location.href = (e.target as HTMLSelectElement).value;
+  });
+</script>

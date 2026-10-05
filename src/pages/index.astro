@@ -1,0 +1,305 @@
+---
+import Base from "../layouts/Base.astro";
+import Screenshot from "../components/Screenshot.astro";
+import Command from "../components/Command.astro";
+import { INSTALL_CMD, INSTALL_DISPLAY, LATEST, RELEASES_URL } from "../site";
+import "../styles/home.css";
+
+const features = [
+  {
+    id: "deploy",
+    eyebrow: "Apps",
+    title: "Ship an image or a Git repository",
+    text: "Pick a registry image, or connect GitHub, GitLab or Gitea and Kwerft builds your repository itself: from a Dockerfile, or with Railpack when there is none. Every app gets an HTTPS hostname, and every deploy is a revision you can roll back to.",
+    points: [
+      "Push to main, live about 50 seconds later, with the build log and a commit check on GitHub",
+      "Environment, volumes, replicas, CPU and memory in one form",
+      "Rollouts start the new replica before the old one stops; restart, scale and roll back from the app page",
+      "Live logs and a shell in the browser, for apps and running jobs",
+    ],
+    shots: [{ name: "deploy", tab: "Deploy wizard", alt: "The Deploy an app form with a Git repository selected", url: "ops.example.com/apps/new" }, { name: "app-detail", tab: "App page", alt: "App detail page with replicas, revisions and reachable hostnames", url: "ops.example.com/apps/storefront" }],
+  },
+  {
+    id: "jobs",
+    eyebrow: "Jobs",
+    title: "One-off tasks and cron schedules, next to your services",
+    text: "Real workloads are more than long-running services. Run a migration from an app's image with one click, put backups and reports on a schedule, and see every run with its exit code and logs.",
+    points: [
+      "Run now from an app or a schedule, with environment overrides like DRY_RUN=1",
+      "Time zones, concurrency policy, retries and timeouts per schedule",
+      "Restart an app after a job succeeds, without giving the job any permissions",
+      "Jobs run below apps in priority, so a busy server sheds batch work first",
+    ],
+    shots: [{ name: "jobs", tab: "Jobs", alt: "Jobs page listing schedules and recent runs", url: "ops.example.com/jobs" }],
+  },
+  {
+    id: "monitoring",
+    eyebrow: "Monitoring",
+    title: "Metrics, logs and alerts are built in",
+    text: "VictoriaMetrics and VictoriaLogs come with the install. Charts per app, a log search across everything you're allowed to see, and alert rules that reach Slack, email, a webhook or ntfy.",
+    points: [
+      "A crash-looping app pinged a phone 57 seconds after it was deployed",
+      "Default rules for crash loops, failed jobs, full disks and expiring certificates",
+      "Every alert links straight to the logs of what fired it",
+      "Thirty days of metrics and fourteen of logs by default",
+    ],
+    shots: [{ name: "monitoring-alerts", tab: "Alerts", alt: "Two firing alerts with links to logs, the app and a silence button", url: "ops.example.com/monitoring/alerts" }, { name: "monitoring-metrics", tab: "Metrics", alt: "Monitoring metrics with CPU, memory and request charts", url: "ops.example.com/monitoring/metrics" }, { name: "monitoring-logs", tab: "Log search", alt: "Log search results across several apps", url: "ops.example.com/monitoring/logs" }],
+  },
+  {
+    id: "network",
+    eyebrow: "Network",
+    title: "Closed by default, open where you say",
+    text: "Each project is isolated from the others by Cilium. Traffic rules open exactly the paths you need, and show live allowed and dropped counts from Hubble. The server firewall is in the same place, and so are your domains and certificates.",
+    points: [
+      "One-click allow rules from dropped traffic",
+      "Firewall changes that could lock you out roll back after 60 seconds unless you confirm",
+      "Hetzner Cloud Firewall kept in sync with the same rules (v0.5)",
+      "Let's Encrypt certificates per hostname, or one wildcard through Hetzner DNS",
+    ],
+    shots: [{ name: "network-traffic", tab: "Traffic rules", alt: "Traffic rules with allowed and dropped flow counts", url: "ops.example.com/network/traffic" }, { name: "network-firewall", tab: "Server firewall", alt: "Server firewall rules", url: "ops.example.com/network/firewall" }],
+  },
+  {
+    id: "access",
+    eyebrow: "Access",
+    title: "A team, roles and an audit trail",
+    text: "Invite people as owner, admin, developer or viewer, and limit them to the projects they work on. Every change goes to Kubernetes as the person who made it, so RBAC is the final gate and the audit log is precise.",
+    points: [
+      "Passkeys, authenticator apps and recovery codes; require two-factor for everyone",
+      "Single sign-on with Google, Microsoft Entra, Keycloak or any OpenID Connect provider",
+      "Scoped API tokens and downloadable kubeconfigs for CI and kubectl",
+      "Shell sessions are recorded and can be replayed in the browser",
+    ],
+    shots: [{ name: "access-members", tab: "Members", alt: "Access page listing members and their roles", url: "ops.example.com/access/members" }, { name: "terminal", tab: "Shell", alt: "A recorded shell session in a running replica", url: "ops.example.com/apps/storefront" }, { name: "access-audit", tab: "Audit log", alt: "The audit log with sign-ins, builds, shell sessions and changes", url: "ops.example.com/access/audit" }],
+  },
+  {
+    id: "clusters",
+    eyebrow: "Clusters & nodes",
+    since: "v0.5",
+    title: "Start with one server, grow without reinstalling",
+    text: "Add Hetzner Cloud servers as nodes from the console, join dedicated servers with one command, and make the control plane highly available when you need it. More clusters, in other locations or on other servers, connect to the same console.",
+    points: [
+      "Node pools, including build pools that scale to zero",
+      "Cloud Volumes, a Hetzner Load Balancer and vSwitch coupling to dedicated servers",
+      "Remote clusters dial out to the console, so their Kubernetes API stays private",
+      "Apps on remote clusters keep their hostnames, DNS follows them",
+    ],
+    shots: [{ name: "cluster-nodes", tab: "Nodes", alt: "Node pools and nodes of the production cluster, including a dedicated server", url: "ops.example.com/clusters/local/nodes" }, { name: "clusters", tab: "Remote cluster", alt: "A remote cluster connected through its agent, with node pools and DNS records", url: "ops.example.com/clusters/hel1-staging" }],
+  },
+];
+
+const stack = [
+  { k: "Console", v: "Kwerft — one Go binary: API, reconcilers, the web console, SQLite" },
+  { k: "Platform", v: "VictoriaMetrics · VictoriaLogs · Hubble · rootless BuildKit · zot registry" },
+  { k: "Edge", v: "Traefik on :80/:443 via Gateway API · cert-manager · Let's Encrypt" },
+  { k: "Kubernetes", v: "k3s with embedded etcd and secrets encryption · Cilium with WireGuard" },
+  { k: "Host", v: "Ubuntu 22.04, 24.04 or 26.04 · nftables firewall · unattended upgrades" },
+  { k: "Hetzner", v: "Cloud API · Robot · DNS · Cloud Volumes · Load Balancers" },
+];
+---
+<Base title="Kwerft" description="Rent a Hetzner server, run one script, manage containers from the browser. Kwerft installs hardened Kubernetes with a web console on Hetzner Cloud and dedicated servers.">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-text">
+        <a class="pill" href={RELEASES_URL}><span>Pre-beta</span>{LATEST} is out · release notes →</a>
+        <h1>Rent a Hetzner server, run one script, manage containers from the browser.</h1>
+        <p class="lead">Kwerft installs a hardened Kubernetes on a fresh Ubuntu server — Hetzner Cloud or dedicated — and puts a console on top. Deploy images or Git repositories, run jobs, watch it all, and manage domains, networks, nodes and people without writing YAML.</p>
+        <div class="hero-cmd"><Command cmd={INSTALL_CMD} display={INSTALL_DISPLAY} /></div>
+        <div class="hero-ctas">
+          <a class="btn primary" href="/getting-started">Get started <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg></a>
+          <a class="btn ghost" href="/docs">Read the docs</a>
+          <span class="hero-note">Ubuntu on any Hetzner server · 8 GB RAM recommended</span>
+        </div>
+      </div>
+    </div>
+    <div class="wrap hero-shot">
+      <Screenshot name="overview" alt="The Kwerft console overview: what needs attention across apps, volumes and jobs" eager />
+    </div>
+  </section>
+
+  <section class="section numbers" aria-label="Measured on real servers">
+    <div class="wrap">
+      <dl>
+        <div><dt>Bare server to an app on HTTPS</dt><dd>7 min</dd></div>
+        <div><dt>Git push to live</dt><dd>~50 s</dd></div>
+        <div><dt>Crash loop to alert on your phone</dt><dd>57 s</dd></div>
+        <div><dt>Memory the platform uses</dt><dd>~2.5 GB</dd></div>
+      </dl>
+      <p class="muted">Measured on Hetzner Cloud servers during development, October 2026.</p>
+    </div>
+  </section>
+
+  <section class="section" id="install">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow">Install</p>
+        <h2 class="h2">One script, safe to run again</h2>
+        <p class="lead">The installer checks the server, locks down the host firewall, installs k3s, Cilium, Traefik, cert-manager and monitoring, then Kwerft itself. Every stage is idempotent: re-run the same command to repair or upgrade.</p>
+        <ol class="steps">
+          <li><b>Rent a server.</b> Any Hetzner Cloud or dedicated server with Ubuntu 22.04, 24.04 or 26.04, amd64 or arm64.</li>
+          <li><b>Run the script</b> as root, with your domain — or without one, and Kwerft gives you a temporary <code>sslip.io</code> hostname.</li>
+          <li><b>Open the console</b> and paste the single-use setup token from the server to create the owner account.</li>
+        </ol>
+        <p><a href="/getting-started">Walk through it step by step →</a></p>
+      </div>
+      <div class="term" role="img" aria-label="Installer output: each stage completes with a check mark, then the console address and where the setup token is stored">
+        <div class="term-bar" aria-hidden="true"><span></span><span></span><span></span></div>
+<pre aria-hidden="true"><span class="d">root@ubuntu-8gb-fsn1-1:~#</span> <span class="b">curl -fsSL …/install.sh | sudo bash -s -- \
+    --domain ops.example.com --yes</span>
+
+<span class="a">▸ Kwerft installer {LATEST.slice(1)}</span>  <span class="d">channel=stable · platform=cloud</span>
+
+<span class="g">✓</span> Preflight       Ubuntu 24.04 · amd64 · 8 GiB RAM · 142 GB free
+<span class="g">✓</span> System          packages · sysctl · chrony · unattended-upgrades
+<span class="g">✓</span> Firewall        nftables: 22, 80, 443 public
+<span class="g">✓</span> Kubernetes      k3s v1.37.1 · embedded etcd · secrets encryption
+<span class="g">✓</span> Network         Cilium 1.20.2 · kube-proxy replacement · WireGuard
+<span class="g">✓</span> Ingress &amp; TLS   Traefik · cert-manager · Gateway API
+<span class="g">✓</span> Observability   VictoriaMetrics (30d) · VictoriaLogs (14d)
+<span class="g">✓</span> Kwerft          control plane ready · registry zot
+<span class="g">✓</span> Handoff         DNS 203.0.113.24 · token ready
+
+  Open        <span class="a">https://ops.example.com/setup</span>
+  Setup token stored at /etc/kwerft/setup-token <span class="d">(single use, 24 h)</span>
+
+<span class="g">Done in 4m 12s.</span> <span class="d">Re-run the same command any time to repair or upgrade.</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="wrap">
+      <p class="eyebrow">Features</p>
+      <h2 class="h2">Everything a small team needs to run production</h2>
+      <p class="lead">Kwerft is a console for people who'd rather ship than operate Kubernetes. Underneath it's plain, upstream Kubernetes — so nothing you build is trapped.</p>
+      <nav class="feature-index" aria-label="Features">
+        {features.map((f) => <a href={`#${f.id}`}><b>{f.eyebrow}{f.since && <span class="badge">{f.since}</span>}</b><span>{f.title}</span></a>)}
+      </nav>
+    </div>
+    {features.map((f) => (
+      <article class="feature" id={f.id}>
+        <div class="wrap">
+          <div class="feature-grid">
+            <div class="feature-text">
+              <p class="eyebrow">{f.eyebrow}{f.since && <span class="badge" title="In the v0.5.0 release candidate">{f.since}</span>}</p>
+              <h3>{f.title}</h3>
+              <p>{f.text}</p>
+            </div>
+            <ul class="checks">{f.points.map((p) => <li>{p}</li>)}</ul>
+          </div>
+          <div class="shot-tabs" data-tabs>
+            {f.shots.length > 1 && (
+              <div class="tablist" role="tablist" aria-label={`${f.eyebrow} screenshots`}>
+                {f.shots.map((s, j) => <button type="button" role="tab" id={`tab-${s.name}`} aria-controls={`panel-${s.name}`} aria-selected={j === 0 ? "true" : "false"} tabindex={j === 0 ? 0 : -1}>{s.tab}</button>)}
+              </div>
+            )}
+            {f.shots.map((s, j) => (
+              <div role={f.shots.length > 1 ? "tabpanel" : undefined} id={`panel-${s.name}`} aria-labelledby={f.shots.length > 1 ? `tab-${s.name}` : undefined} hidden={j > 0}>
+                <Screenshot name={s.name} alt={s.alt} url={s.url} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <section class="section" id="stack">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow">Under the hood</p>
+        <h2 class="h2">Boring, upstream parts — and a console that ties them together</h2>
+        <p class="lead">Kubernetes is the database: apps, jobs, domains and rules are custom resources. The console writes them; reconcilers turn them into Deployments, routes, certificates and network policies.</p>
+        <p class="muted after">That means GitOps works, <code>kubectl</code> works, and you can export any app as YAML. Kwerft is never a dead end.</p>
+      </div>
+      <ol class="stack">
+        {stack.map((s) => <li><span>{s.k}</span><p>{s.v}</p></li>)}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="security">
+    <div class="wrap">
+      <p class="eyebrow">Security</p>
+      <h2 class="h2">Assume the server is on the open internet, because it is</h2>
+      <div class="cards">
+        <div class="card"><h3>No default passwords</h3><p>The console stays locked until someone presents the single-use setup token from the server's disk.</p></div>
+        <div class="card"><h3>Acts as you</h3><p>The console reaches Kubernetes impersonating the signed-in user. Its own account can't do what you can't.</p></div>
+        <div class="card"><h3>Private Kubernetes API</h3><p>Only ports 22, 80 and 443 are public. <code>kubectl</code> goes through the console's proxy with a scoped, expiring token.</p></div>
+        <div class="card"><h3>Isolated projects</h3><p>Default-deny network policies between projects, WireGuard between nodes, and a test suite that proves the isolation.</p></div>
+        <div class="card"><h3>Encrypted at rest</h3><p>Kubernetes secrets are encrypted by k3s; second-factor secrets are sealed with a key you can rotate.</p></div>
+        <div class="card"><h3>Recorded shells</h3><p>Shell access is role-gated, time-limited and recorded. Every change lands in the audit log.</p></div>
+      </div>
+      <p class="after"><a href="/docs/security">Read the security model →</a></p>
+    </div>
+  </section>
+
+  <section class="section" id="roadmap">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow">Status</p>
+        <h2 class="h2">Working today, heading for a public beta</h2>
+        <p class="lead">Kwerft runs production workloads on Hetzner Cloud and dedicated servers already. It's pre-beta: expect fast releases and the occasional rough edge. The license will be settled before the beta.</p>
+      </div>
+      <div class="roadmap">
+        <div><h3>Available</h3>
+          <ul class="checks">
+            <li>Installer for Cloud and dedicated servers</li>
+            <li>Apps from images and Git, jobs, volumes, domains</li>
+            <li>Metrics, logs, alerts</li>
+            <li>Traffic rules and the server firewall</li>
+            <li>Roles, project access, SSO, API tokens</li>
+          </ul>
+          <h3 class="after">In v0.5 <span class="rc">release candidate</span></h3>
+          <ul class="checks">
+            <li>Hetzner Cloud servers as nodes, HA control plane</li>
+            <li>Multiple clusters through an agent</li>
+            <li>Cloud Firewall, Cloud Volumes, Load Balancer</li>
+          </ul>
+        </div>
+        <div><h3>Next, before the beta</h3>
+          <ul class="todo">
+            <li>Backups to Hetzner Object Storage and full restore</li>
+            <li>A secret store in the console</li>
+            <li>Upgrades with rollback</li>
+            <li>Docker Compose import and templates</li>
+          </ul>
+          <h3 class="after">After the beta</h3>
+          <ul class="todo">
+            <li>Kwerft for Mac: the same platform locally, push a project to a server unchanged</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section cta">
+    <div class="wrap">
+      <h2 class="h2">Your first app can be live in ten minutes</h2>
+      <p class="lead">All you need is a Hetzner server and, ideally, a domain.</p>
+      <div class="hero-cmd"><Command cmd={INSTALL_CMD} display={INSTALL_DISPLAY} /></div>
+      <div class="hero-ctas"><a class="btn primary" href="/getting-started">Getting started guide</a><a class="btn ghost" href="/docs/requirements">Requirements</a></div>
+    </div>
+  </section>
+</Base>
+<script>
+  // Screenshot tabs: one panel visible at a time, arrow keys move between tabs.
+  document.querySelectorAll<HTMLElement>("[data-tabs]").forEach((box) => {
+    const tabs = [...box.querySelectorAll<HTMLButtonElement>("[role=tab]")];
+    const select = (t: HTMLButtonElement) => tabs.forEach((x) => {
+      const on = x === t;
+      x.setAttribute("aria-selected", String(on));
+      x.tabIndex = on ? 0 : -1;
+      const panel = document.getElementById(x.getAttribute("aria-controls")!);
+      if (panel) panel.hidden = !on;
+    });
+    tabs.forEach((t, i) => {
+      t.addEventListener("click", () => select(t));
+      t.addEventListener("keydown", (e) => {
+        const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!d) return;
+        const n = tabs[(i + d + tabs.length) % tabs.length]!;
+        select(n); n.focus();
+      });
+    });
+  });
+</script>

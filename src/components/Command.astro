@@ -1,0 +1,27 @@
+---
+// A one-line shell command with a copy button.
+interface Props { cmd: string; display?: string; label?: string; }
+// `display` may wrap the command over lines; `cmd` is what gets copied.
+const { cmd, display = cmd, label = "Copy" } = Astro.props;
+---
+<div class="cmd">
+  <pre><span class="p" aria-hidden="true">$ </span><code>{display}</code></pre>
+  <button class="copy" type="button" data-copy={cmd} aria-label="Copy command">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M10.5 5V3.5A1.5 1.5 0 0 0 9 2H3.5A1.5 1.5 0 0 0 2 3.5V9a1.5 1.5 0 0 0 1.5 1.5H5"/></svg>
+    <span>{label}</span>
+  </button>
+</div>
+<script>
+  document.querySelectorAll<HTMLButtonElement>("button[data-copy]").forEach((b) => {
+    if (b.dataset.bound) return;
+    b.dataset.bound = "1";
+    b.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(b.dataset.copy ?? ""); } catch { return; }
+      const span = b.querySelector("span");
+      const was = span?.textContent;
+      b.toggleAttribute("data-copied", true);
+      if (span) span.textContent = "Copied";
+      setTimeout(() => { b.removeAttribute("data-copied"); if (span) span.textContent = was ?? "Copy"; }, 1600);
+    });
+  });
+</script>

@@ -1,0 +1,40 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# Same policy as the console: everything from this origin, nothing inline.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+[[headers]]
+  for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Pages build as <name>.html; /docs is also a directory, so name its page.
+[[redirects]]
+  from = "/docs"
+  to = "/docs.html"
+  status = 200
+
+# The installer's eventual short URL (docs/plan.md: get.kwerft.dev). Until it
+# exists, kwerft.dev/install.sh forwards to the published script.
+[[redirects]]
+  from = "/install.sh"
+  to = "https://raw.githubusercontent.com/ehilzinger/kwerft-install/main/install.sh"
+  status = 302
+
+[[redirects]]
+  from = "https://www.kwerft.dev/*"
+  to = "https://kwerft.dev/:splat"
+  status = 301
+  force = true
