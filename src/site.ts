@@ -8,3 +8,13 @@ export const INSTALL_CMD = `curl -fsSL ${INSTALL_URL} | sudo bash -s -- --domain
 export const INSTALL_DISPLAY = `curl -fsSL ${INSTALL_URL} | sudo bash -s -- \\\n  --domain ops.example.com --email ops@example.com --yes`;
 export const RELEASES_URL = "https://github.com/ehilzinger/kwerft-install/releases";
 export const LATEST = "v0.4.0";
+
+/** The site's operator, for the Impressum and the privacy policy (same as hatchure.app's). */
+export const OPERATOR = {
+  name: "Enzo Elias Hilzinger",
+  street: "Friedrich-Ebert-Str. 8/1",
+  city: "69207 Sandhausen",
+  email: "enzo@hatchure.app",
+};
+/** Date of the current Impressum and privacy policy. */
+export const LEGAL_DATE = { de: "5. Oktober 2026", en: "5 October 2026" };

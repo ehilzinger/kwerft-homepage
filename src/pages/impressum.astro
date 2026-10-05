@@ -1,0 +1,32 @@
+---
+import Legal from "../layouts/Legal.astro";
+import { OPERATOR as O } from "../site";
+---
+<Legal title="Impressum" eyebrow="Legal notice" lang="de" description="Impressum (Anbieterkennzeichnung) von kwerft.dev nach § 5 DDG.">
+  <h2>Angaben gemäß § 5 DDG</h2>
+  <h3>Anbieter</h3>
+  <p>{O.name}<br />{O.street}<br />{O.city}<br />Deutschland</p>
+
+  <h3>Kontakt</h3>
+  <p>E-Mail: <a href={`mailto:${O.email}`}>{O.email}</a></p>
+
+  <h3>Umsatzsteuer</h3>
+  <p>Gemäß § 19 UStG wird keine Umsatzsteuer berechnet (Kleinunternehmerregelung).</p>
+
+  <h3>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h3>
+  <p>{O.name}<br />{O.street}<br />{O.city}<br />Deutschland</p>
+
+  <h3>Verbraucherstreitbeilegung</h3>
+  <p>Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+
+  <h3>Haftung für Inhalte</h3>
+  <p>Als Diensteanbieter sind wir für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Die Anleitungen und Beschreibungen auf kwerft.dev wurden mit Sorgfalt erstellt; Kwerft ist jedoch eine Vorabversion (vor der öffentlichen Beta), und für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte sowie für die Folgen ihrer Anwendung auf eigenen Servern können wir keine Gewähr übernehmen.</p>
+
+  <h3>Haftung für Links</h3>
+  <p>Unser Angebot enthält Links zu externen Webseiten Dritter (u. a. GitHub), auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links umgehend entfernen.</p>
+
+  <h3>Urheberrecht</h3>
+  <p>Die durch den Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Bildschirmfotos zeigen die Kwerft-Konsole mit erfundenen Beispieldaten. Für die Software Kwerft gilt die jeweils mit ihr veröffentlichte Lizenz.</p>
+
+  <p class="muted">Datenschutz: siehe <a href="/datenschutz">Datenschutzerklärung</a>.</p>
+</Legal>

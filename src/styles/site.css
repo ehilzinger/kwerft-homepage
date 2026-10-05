@@ -219,3 +219,13 @@ p { text-wrap: pretty; }
 .checks li::before { content: ""; position: absolute; left: 2px; top: 5px; width: 16px; height: 16px; border-radius: 50%; background: var(--ok-bg); }
 .checks li::after { content: ""; position: absolute; left: 7px; top: 9px; width: 6px; height: 4px; border-left: 1.6px solid var(--ok); border-bottom: 1.6px solid var(--ok); transform: rotate(-45deg); }
 .todo li::before { content: ""; position: absolute; left: 3px; top: 6px; width: 14px; height: 14px; border-radius: 50%; border: 1.5px dashed var(--faint); }
+
+/* ---------- legal pages and footer line ---------- */
+.legal { max-width: 760px; margin-inline: auto; padding-block: 64px 96px; }
+.legal h1 { font: 700 clamp(30px, 4vw, 42px)/1.1 var(--display); letter-spacing: -.02em; margin: 0 0 8px; }
+.legal-other { margin: 0 0 32px; font-size: 14.5px; }
+.legal .prose h2 { font-size: 22px; margin-top: 40px; }
+.legal .prose h3 { margin-top: 24px; }
+.site-foot .foot-legal { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 36px; padding-top: 20px; background: linear-gradient(var(--line), var(--line)) content-box top / 100% 1px no-repeat; font-size: 13.5px; color: var(--faint); }
+.site-foot .foot-legal a { color: var(--muted); }
+.site-foot .foot-legal span { margin-right: auto; }

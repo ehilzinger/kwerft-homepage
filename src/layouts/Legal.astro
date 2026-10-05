@@ -1,0 +1,15 @@
+---
+// Impressum and privacy pages: one narrow column of prose.
+import Base from "./Base.astro";
+
+interface Props { title: string; description: string; lang: "de" | "en"; eyebrow: string; other?: { href: string; label: string } }
+const { title, description, lang, eyebrow, other } = Astro.props;
+---
+<Base title={title} description={description}>
+  <article class="wrap legal" lang={lang}>
+    <p class="eyebrow">{eyebrow}</p>
+    <h1>{title}</h1>
+    {other && <p class="legal-other"><a href={other.href} hreflang={lang === "de" ? "en" : "de"}>{other.label}</a></p>}
+    <div class="prose"><slot /></div>
+  </article>
+</Base>

@@ -1,6 +1,6 @@
 ---
 import Logo from "./Logo.astro";
-import { RELEASES_URL } from "../site";
+import { OPERATOR, RELEASES_URL } from "../site";
 ---
 <footer class="site-foot">
   <div class="wrap">
@@ -35,5 +35,11 @@ import { RELEASES_URL } from "../site";
         <li><a href="https://github.com/ehilzinger/kwerft/pkgs/container/kwerft">Container image</a></li>
       </ul>
     </div>
+  </div>
+  <div class="wrap foot-legal">
+    <span>© {new Date().getFullYear()} {OPERATOR.name}</span>
+    <a href="/impressum">Impressum</a>
+    <a href="/datenschutz">Datenschutz</a>
+    <a href="/privacy">Privacy</a>
   </div>
 </footer>

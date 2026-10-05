@@ -1,0 +1,57 @@
+---
+import Legal from "../layouts/Legal.astro";
+import { OPERATOR as O, LEGAL_DATE } from "../site";
+---
+<Legal title="Privacy policy" eyebrow="Privacy" lang="en" description="How kwerft.dev handles personal data." other={{ href: "/datenschutz", label: "Deutsche Fassung" }}>
+  <p class="muted">Last updated: {LEGAL_DATE.en}</p>
+  <div class="note"><p>This is a translation of the German <a href="/datenschutz">Datenschutzerklärung</a>, provided for convenience. In case of any discrepancy, the German version is the legally binding one. Article references are to the EU General Data Protection Regulation (GDPR).</p></div>
+
+  <h2>1. Controller</h2>
+  <p>The controller within the meaning of the GDPR is:</p>
+  <p>{O.name}<br />{O.street}<br />{O.city}<br />Germany<br />Email: <a href={`mailto:${O.email}`}>{O.email}</a></p>
+  <p>Further details are in the <a href="/impressum">Impressum</a>. This policy covers the website kwerft.dev.</p>
+
+  <h2>2. Overview</h2>
+  <ul>
+    <li><strong>No tracking.</strong> There are no cookies, no analytics, no advertising and no embedded third-party content. Fonts and images are served by kwerft.dev itself.</li>
+    <li><strong>We only receive personal data</strong> when you write to us through the contact form or by email (section 4).</li>
+    <li><strong>Kwerft itself</strong> — the software you install on your own servers — sends no data to us. You are responsible for the data in your installation.</li>
+  </ul>
+
+  <h2>3. Hosting and server log files</h2>
+  <p>This website is hosted by Netlify, Inc. (USA). When you visit, Netlify automatically processes technical connection data (IP address, date and time of the request, the file requested, user agent), as is technically necessary for any web server to deliver the pages and to keep the system secure. A data processing agreement under Art. 28 GDPR is in place with Netlify. Transfer to countries outside the EU/EEA cannot be ruled out; Netlify relies on the EU Standard Contractual Clauses for this. We look at this connection data only when there is a reason to — to find a fault or fend off abuse; Netlify deletes it according to the service's own retention periods.</p>
+  <p>Legal basis: Art. 6(1)(f) GDPR (our legitimate interest in a secure, working website).</p>
+
+  <h2>4. Contact form and email</h2>
+  <p>When you write to us through the form on <a href="/support">Support &amp; hosting</a>, we process what you enter there: your name, email address, optionally your company, the number of servers, your interests and your message. The form is received and stored by Netlify (Netlify Forms, see section 3); Netlify notifies us by email to a mailbox at iCloud Mail (Apple Distribution International Ltd., Ireland). If you email us directly, the same applies to the content of your email.</p>
+  <p>We use this data only to answer your request and, where relevant, to prepare an offer or a contract. We don't pass it on and don't send you a newsletter.</p>
+  <p>Legal basis: Art. 6(1)(b) GDPR where your request is aimed at a contract (for example hosting or support), otherwise Art. 6(1)(f) GDPR (our legitimate interest in answering enquiries).</p>
+  <p>Retention: we delete your request once it has been dealt with, at the latest twelve months after our last contact — unless a contract follows, in which case the statutory retention periods apply. On request we delete it immediately.</p>
+
+  <h2>5. Local storage in your browser</h2>
+  <p>If you switch between the light and dark appearance with the button at the top right, your browser remembers the choice in its local storage (<code>localStorage</code>, key <code>kwerft-theme</code>). The value never leaves your device and is not sent to us. The legal basis is § 25(2) no. 2 TDDDG: storing it is strictly necessary for a function you explicitly asked for. You can delete it at any time in your browser's settings.</p>
+
+  <h2>6. Links to GitHub and the install script</h2>
+  <p>The website links to pages on GitHub (GitHub, Inc., USA), such as release notes. The address <code>kwerft.dev/install.sh</code> redirects your request to GitHub (<code>raw.githubusercontent.com</code>), where the install script is stored. When you follow such a link or download the script, GitHub processes your connection data under its own responsibility and its own privacy policy.</p>
+
+  <h2>7. Your rights</h2>
+  <p>Under the GDPR you have the right to:</p>
+  <ul>
+    <li>access the data stored about you (Art. 15 GDPR),</li>
+    <li>have inaccurate data corrected (Art. 16 GDPR),</li>
+    <li>erasure (Art. 17 GDPR),</li>
+    <li>restriction of processing (Art. 18 GDPR),</li>
+    <li>data portability (Art. 20 GDPR),</li>
+    <li>object, on grounds relating to your particular situation, to processing based on a legitimate interest (Art. 21 GDPR).</li>
+  </ul>
+  <p>An informal email to <a href={`mailto:${O.email}`}>{O.email}</a> is enough. You also have the right to lodge a complaint with a data protection supervisory authority, for example the State Commissioner for Data Protection and Freedom of Information of Baden-Württemberg.</p>
+
+  <h2>8. Security</h2>
+  <p>All connections to kwerft.dev are encrypted with TLS (shown by https:// in the address bar). We also take appropriate technical and organisational measures under Art. 32 GDPR to protect your data against loss, alteration and unauthorised access.</p>
+
+  <h2>9. No automated decision-making</h2>
+  <p>There is no automated decision-making, including profiling (Art. 22 GDPR).</p>
+
+  <h2>10. Changes to this policy</h2>
+  <p>We update this policy when the website or the law changes. The version published here applies.</p>
+</Legal>
