@@ -21,6 +21,21 @@
 .hero-shot .frame img { aspect-ratio: 16 / 8.6; object-fit: cover; object-position: top; }
 @media (max-width: 600px) { .hero { padding-top: 44px; } .hero-shot { margin-top: 40px; } .hero-note { margin-left: 0; width: 100%; } }
 
+/* "Built on Kwerft": projects that run on it. */
+.built-on { padding-block: 40px 44px; }
+.built-on .wrap { display: grid; grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.built-k { align-self: center; font: 600 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faint); margin: 0; padding-right: 8px; }
+.proj { display: grid; gap: 10px; align-content: start; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); text-decoration: none; color: var(--ink); transition: border-color .15s; }
+.proj:hover { border-color: var(--accent); }
+.proj span { color: var(--ink-2); font-size: 14.5px; }
+.proj .go { color: var(--accent); font-size: 13.5px; font-weight: 500; }
+.proj-logo { height: 30px; width: auto; display: block; }
+.proj-runs { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.proj-runs li { font: 500 12px var(--mono); color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line-2); border-radius: 6px; padding: 2px 8px; }
+.proj.add { border-style: dashed; background: transparent; }
+.proj.add b { font-size: 15px; }
+@media (max-width: 860px) { .built-on .wrap { grid-template-columns: 1fr; } }
+
 .numbers { background: var(--surface); padding-block: 44px 36px; border-top: 1px solid var(--line); }
 .numbers dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin: 0 0 16px; }
 .numbers dl > div { border-left: 2px solid var(--accent); padding-left: 16px; }

@@ -2,6 +2,7 @@
 import Base from "../layouts/Base.astro";
 import Screenshot from "../components/Screenshot.astro";
 import Command from "../components/Command.astro";
+import HatchureLogo from "../components/logos/Hatchure.astro";
 import { INSTALL_CMD, INSTALL_DISPLAY, LATEST, PREVIEW, RELEASES_URL, SOURCE_URL } from "../site";
 import "../styles/home.css";
 import "../styles/support.css";
@@ -132,6 +133,15 @@ const features = [
 
 const badgeTitle = (since: string) => since === "v0.5" ? "In the v0.5.0 release candidates" : `In the ${PREVIEW} release candidate`;
 
+// Projects running on Kwerft, for the "Built on Kwerft" strip.
+const projects = [
+  {
+    name: "Hatchure", url: "https://hatchure.app", host: "hatchure.app", logo: HatchureLogo,
+    text: "Everything behind the Hatchure apps runs on Kwerft:",
+    runs: ["Router", "APIs", "Map tile API", "Map renderer", "Backup jobs", "Seed jobs"],
+  },
+];
+
 const stack = [
   { k: "Console", v: "Kwerft — one Go binary: API, reconcilers, the web console, SQLite" },
   { k: "Platform", v: "VictoriaMetrics · VictoriaLogs · Hubble · rootless BuildKit · zot registry · Velero · system-upgrade-controller" },
@@ -158,6 +168,25 @@ const stack = [
     </div>
     <div class="wrap hero-shot">
       <Screenshot name="overview" alt="The Kwerft console overview: what needs attention across apps, volumes and jobs" eager />
+    </div>
+  </section>
+
+  <section class="built-on" aria-labelledby="built-on-k">
+    <div class="wrap">
+      <p class="built-k" id="built-on-k">Built on Kwerft</p>
+      {projects.map((p) => (
+        <a class="proj" href={p.url}>
+          <p.logo />
+          <span>{p.text}</span>
+          <ul class="proj-runs">{p.runs.map((r) => <li>{r}</li>)}</ul>
+          <span class="go">{p.host} →</span>
+        </a>
+      ))}
+      <a class="proj add" href="/support#contact">
+        <b>Running something on Kwerft?</b>
+        <span>Tell us, and we'll add it here.</span>
+        <span class="go">Get in touch →</span>
+      </a>
     </div>
   </section>
 
