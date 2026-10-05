@@ -38,7 +38,7 @@ const podSuffix = (seed, n = 5) => {
 };
 
 /** See clusters(): the Hetzner Cloud card of a cluster page. */
-export const SHOW_CLUSTER_CLOUD = false;
+export const SHOW_CLUSTER_CLOUD = true;
 
 export const REGISTRY = "registry.kwerft.internal:5000";
 
@@ -635,9 +635,6 @@ export function clusters(now) {
         { name: "hel1-staging-workers", role: "worker", serverType: "cx33", location: "hel1", count: 2, readyNodes: 2 },
       ],
       publicAddresses: ["203.0.113.41", "2001:db8:1a2::1"],
-      // Left out while the console's Hetzner Cloud card on cluster pages renders its
-      // checkbox labels unstyled (settings.css scopes .check to .settings); set
-      // SHOW_CLUSTER_CLOUD to true once that is fixed.
       [SHOW_CLUSTER_CLOUD ? "cloud" : "_cloud"]: {
         firewall: "sync", loadBalancer: { enabled: false },
         status: {
