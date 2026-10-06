@@ -9,7 +9,7 @@ export const INSTALL_DISPLAY = `curl -fsSL ${INSTALL_URL} | sudo bash -s -- \\\n
 export const RELEASES_URL = "https://github.com/ehilzinger/kwerft-install/releases";
 export const LATEST = "v0.4.0";
 /** The newest release candidate; features newer than LATEST carry its version as a badge. */
-export const PREVIEW = "v0.6.0-rc.4";
+export const PREVIEW = "v0.6.0-rc.9";
 /** The source code (AGPL-3.0-only). */
 export const SOURCE_URL = "https://github.com/ehilzinger/kwerft";
 

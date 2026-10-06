@@ -7,7 +7,7 @@ order: 6
 
 Kwerft upgrades itself from the console. Owners start an upgrade under **Settings › Updates**; Kwerft takes a backup, runs the new release's installer on the server, checks the result, and rolls back by itself if anything fails. Kubernetes (k3s) is upgraded separately, one node at a time.
 
-<div class="note">Upgrades from the console need Kwerft v0.6.0, which is in release candidates. The first upgrade from the console is possible from a console that already runs 0.6.x: to get from v0.4.0 or v0.5.0 to v0.6.0, <a href="#upgrade-from-v04-or-v05">re-run the installer</a> once. Rollbacks and Kubernetes upgrades have been tested against simulated clusters; the end-to-end runs on real servers have not run yet.</div>
+<div class="note">Upgrades from the console need Kwerft v0.6.0, which is in release candidates. A console upgrades itself from v0.6.0-rc.8 on: to get there from v0.4.0, v0.5.0 or an earlier v0.6.0 release candidate, <a href="#upgrade-from-v04-or-v05">re-run the installer</a> once. An upgrade from the console (rc.8 to rc.9) has run on a real server and in that release's end-to-end run without any step by hand; rollbacks and Kubernetes upgrades have so far been tested against simulated clusters only.</div>
 
 Owners start and cancel upgrades and change the update policy. Admins see **Settings › Updates** and the history but cannot start anything. Other roles do not see the tab.
 
@@ -96,10 +96,10 @@ The default alert rule **upgrade-failed** fires when the latest upgrade of Kwerf
 
 ## Upgrade from v0.4 or v0.5
 
-Consoles on v0.4.0 and v0.5.0 have no Updates tab. Upgrade them once by running the installer of the release you want on the console's server, as root. The same goes for consoles on v0.6.0-rc.1 and rc.2: their upgrade runner is refused by systemd on Ubuntu ("Access denied" in the Backup step), so move them to rc.3 or later this way once; console upgrades work from rc.3 on.
+Consoles on v0.4.0 and v0.5.0 have no Updates tab. Upgrade them once by running the installer of the release you want on the console's server, as root. The same goes for consoles on v0.6.0-rc.1 to rc.7: their upgrade runner cannot finish an upgrade (rc.1 and rc.2 are refused by systemd, rc.3 and rc.4 stop in the Backup step on a Helm flag that Helm 4 dropped, rc.6 and rc.7 cannot start the installer from the pod), so move them to rc.8 or later this way once; console upgrades work from rc.8 on.
 
 ```bash
-curl -fsSL https://kwerft.dev/v0.6.0-rc.4/install.sh | sudo bash -s -- --yes
+curl -fsSL https://kwerft.dev/v0.6.0-rc.9/install.sh | sudo bash -s -- --yes
 ```
 
 Give the same flags as when you installed (for example `--acme-server staging` or `--lite`): servers installed before 0.6 have no remembered settings yet, so this one run needs them. From then on the server remembers them (see [Installer › Re-run](/docs/installer#re-run-to-repair-or-upgrade)), and the console can upgrade itself.
@@ -111,15 +111,15 @@ The re-run upgrades Kwerft and the platform components, and adds Velero (for [ba
 Connected clusters are upgraded the same way: on the server where you ran the adopt command, run the new release's installer in agent mode. The agent token is read back from the cluster:
 
 ```bash
-curl -fsSL https://kwerft.dev/v0.6.0-rc.4/install.sh | sudo bash -s -- --agent --console https://ops.example.com --yes
+curl -fsSL https://kwerft.dev/v0.6.0-rc.9/install.sh | sudo bash -s -- --agent --console https://ops.example.com --yes
 ```
 
 Upgrade the console first: it works with clusters one minor version behind it, not ahead of it.
 
 ## Limits
 
-- Only owners start upgrades, and only from a console on 0.6.x.
+- Only owners start upgrades, and only from a console on v0.6.0-rc.8 or later.
 - Kubernetes upgrades have no automatic rollback (above).
 - The installer script is checked against its published SHA-256 checksum, which protects against a broken download, not against a compromised release repository. Signed scripts are planned.
-- The end-to-end runs (a console upgrade, a forced rollback, k3s on three nodes) exist but have not run on real servers yet.
+- A console upgrade has run on a real server and in the release's end-to-end run (rc.8 to rc.9). The other end-to-end runs (a forced rollback, k3s on three nodes) exist but have not run on real servers yet.
 - AutoPatch only covers patch releases, and has not been tried with a real release yet.

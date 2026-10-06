@@ -7,7 +7,7 @@ order: 3
 
 Besides a single image or a Git repository, the deploy wizard has two more sources: a **Template** for common services, and **Docker Compose**, which turns a Compose file's services into apps. Both show what Kwerft will create and create nothing until you confirm.
 
-<div class="note">Templates and the Compose import need Kwerft v0.6.0, which is in release candidates. The default install command installs v0.4.0; to try them, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.4</a>.</div>
+<div class="note">Templates and the Compose import need Kwerft v0.6.0, which is in release candidates. The default install command installs v0.4.0; to try them, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.9</a>.</div>
 
 You need the developer role (or owner or admin) in the project. Open **Apps**, click **Deploy app**, and choose the **Source**.
 

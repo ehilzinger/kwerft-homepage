@@ -32,13 +32,13 @@ The whole script is a set of functions called on its last line, so a download th
 curl -fsSL https://kwerft.dev/v0.4.0/install.sh | sudo bash -s -- --domain ops.example.com --yes
 ```
 
-A pinned script installs its own version. To try what is in release candidates, pin the newest one, v0.6.0-rc.4:
+A pinned script installs its own version. To try what is in release candidates, pin the newest one, v0.6.0-rc.9:
 
 ```bash
-curl -fsSL https://kwerft.dev/v0.6.0-rc.4/install.sh | sudo bash -s -- --domain ops.example.com --yes
+curl -fsSL https://kwerft.dev/v0.6.0-rc.9/install.sh | sudo bash -s -- --domain ops.example.com --yes
 ```
 
-v0.6.0-rc.4 contains everything from the v0.5.0 release candidates ([Clusters & nodes](/docs/clusters-and-nodes), the Hetzner Cloud integration and several of the flags below) and adds [backups](/docs/backups), [upgrades from the console](/docs/upgrades), [secret sets](/docs/secrets), and [templates and the Compose import](/docs/templates-and-compose). Release candidates are for trying things out; expect changes before the release.
+v0.6.0-rc.9 contains everything from the v0.5.0 release candidates ([Clusters & nodes](/docs/clusters-and-nodes), the Hetzner Cloud integration and several of the flags below) and adds [backups](/docs/backups), [upgrades from the console](/docs/upgrades), [secret sets](/docs/secrets), and [templates and the Compose import](/docs/templates-and-compose). Release candidates are for trying things out; expect changes before the release.
 
 `--version` picks the Kwerft release (console image and Helm chart) independently of the script; it takes `0.4.0` or `v0.4.0`. The installer checks that the release is published before it changes anything and stops with exit code 50 if it is not. Prefer the script of the release you install, since flags and stages change between releases.
 
@@ -240,7 +240,7 @@ The handoff stage creates a single-use setup token in `/etc/kwerft/setup-token` 
 **v0.6.0.** On a fresh server, `--restore` rebuilds a console from a Cluster backup in Object Storage: projects, apps with their volume data, members, settings and history.
 
 ```bash
-curl -fsSL https://kwerft.dev/v0.6.0-rc.4/install.sh | sudo bash -s -- --config /root/kwerft.yaml --restore latest --yes
+curl -fsSL https://kwerft.dev/v0.6.0-rc.9/install.sh | sudo bash -s -- --config /root/kwerft.yaml --restore latest --yes
 ```
 
 The config file needs a `backups:` block (see [Config file](#config-file)):

@@ -72,6 +72,7 @@ const features = [
       "Time zones, concurrency policy, retries and timeouts per schedule",
       "Restart an app after a job succeeds, without giving the job any permissions",
       "Jobs run below apps in priority, so a busy server sheds batch work first",
+      "A job that runs out of memory says so, with its limit, instead of a bare exit code (v0.6)",
     ],
     shots: [{ name: "jobs", tab: "Jobs", alt: "Jobs page listing schedules and recent runs", url: "ops.example.com/jobs" }],
   },
@@ -96,7 +97,7 @@ const features = [
     text: "VictoriaMetrics and VictoriaLogs come with the install. Charts per app, a log search across everything you're allowed to see, and alert rules that reach Slack, email, a webhook or ntfy.",
     points: [
       "A crash-looping app pinged a phone 57 seconds after it was deployed",
-      "Default rules for crash loops, failed jobs, full disks and expiring certificates",
+      "Default rules for crash loops, failed jobs, full disks, expiring certificates and, in v0.6, failing drives",
       "Every alert links straight to the logs of what fired it",
       "Thirty days of metrics and fourteen of logs by default",
     ],
@@ -139,6 +140,7 @@ const features = [
       "Cloud Volumes, a Hetzner Load Balancer and vSwitch coupling to dedicated servers",
       "Remote clusters dial out to the console, so their Kubernetes API stays private",
       "Apps on remote clusters keep their hostnames, DNS follows them",
+      "Disk health for dedicated servers: RAID arrays and SMART readings per node, with alerts before a drive fails (v0.6)",
     ],
     shots: [{ name: "cluster-nodes", tab: "Nodes", alt: "Node pools and nodes of the production cluster, including a dedicated server", url: "ops.example.com/clusters/local/nodes" }, { name: "clusters", tab: "Remote cluster", alt: "A remote cluster connected through its agent, with node pools and DNS records", url: "ops.example.com/clusters/hel1-staging" }],
   },
@@ -153,6 +155,7 @@ const features = [
       "Restore a project or single apps in the console, or the whole cluster onto a new server with one installer command",
       "A backup before every upgrade; Kubernetes upgrades one node at a time",
       "Upgrade all clusters in one go, or let AutoPatch install patch releases in a maintenance window",
+      "Upgrades from the console have run on a real server with no step by hand",
     ],
     shots: [{ name: "backups", tab: "Backups", alt: "Backup plans and the backups in the bucket, each with a Restore button", url: "ops.example.com/backups" }, { name: "updates", tab: "Updates", alt: "Settings › Updates: Kwerft and Kubernetes versions per cluster, release notes and the update policy", url: "ops.example.com/settings/updates" }],
   },
@@ -367,11 +370,12 @@ const stack = [
             <li>Upgrades of Kwerft and Kubernetes from the console, with rollback</li>
             <li>Secret sets in the console</li>
             <li>Docker Compose import and templates</li>
+            <li>Disk health for dedicated servers: RAID, SMART, alerts</li>
           </ul>
           <h3 class="after">Next, before the beta</h3>
           <ul class="todo">
             <li>A full restore onto a new server, proven on real Hetzner servers</li>
-            <li>Upgrades and a cluster losing a node, tested on real servers</li>
+            <li>Kubernetes upgrades and a cluster losing a node, tested on real servers</li>
           </ul>
           <h3 class="after">After the beta</h3>
           <ul class="todo">

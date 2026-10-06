@@ -82,7 +82,7 @@ A common pattern is a job that replaces a file that a server has to reopen, such
 The **Jobs** page lists:
 
 - **Schedules:** image or source app, next run, last run, what it restarts on success, and an **Active** switch. Switch it off to suspend the schedule: no new runs start until you switch it back on.
-- **Recent runs:** who or what started each one, when, how long it took, its exit code and status.
+- **Recent runs:** who or what started each one, when, how long it took, its exit code and status. From v0.6.0-rc.8, a run that was killed for using more memory than its size allows says **out of memory** with the limit, for example "out of memory (limit 256Mi)", instead of exit code 137: give the task a larger size.
 
 Open a run to see its status, exit code, duration, image, command, size, timeout, retries, time to stop, environment and overrides, and its **Logs**, live while it runs and afterwards. A running task has a **Shell** button, like an app's replicas. **Cancel run** stops it and keeps the record; **Run again** starts the same task anew; **Delete** removes the run and its logs.
 

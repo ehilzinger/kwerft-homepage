@@ -69,7 +69,7 @@ To serve one port under several hostnames, for example while a site moves to a n
 ### Who may connect, and where the app may go
 
 - **Who may connect to this app inside the cluster?** lists apps by name (`api`) or as `project/app`. Everything else is denied, except traffic for the app's public hostname, which is always allowed. For more, use [traffic rules](/docs/network#traffic-rules).
-- **Outbound access:** **None**, **HTTPS to internet** (the default: TCP 443 to public addresses) or **Unrestricted**.
+- **Outbound access:** **None**, **HTTPS to internet** (the default: TCP 443 to public addresses) or **Unrestricted**. From v0.6.0-rc.8, **HTTPS to internet** also reaches hostnames this cluster serves itself, such as another app's public address; before, such calls timed out unless the app had **Unrestricted**.
 
 ## Volumes
 

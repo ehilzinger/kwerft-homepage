@@ -7,7 +7,7 @@ order: 4
 
 You start with one server, which is the cluster `local`. From **Clusters & nodes** you can add servers to it, make its control plane highly available, and connect more clusters, in other locations or on other servers, to the same console. Owners and admins manage clusters and nodes; other roles only see which cluster a project runs in.
 
-<div class="note">Everything on this page needs Kwerft v0.5.0, which is in release candidates. The default install command installs v0.4.0; to try these features, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.4</a>, the newest release candidate, which contains them. They are tested on Hetzner Cloud servers and with simulated Hetzner APIs; a cluster that keeps serving apps while it loses a node is still being verified on real servers.</div>
+<div class="note">Everything on this page needs Kwerft v0.5.0, which is in release candidates. The default install command installs v0.4.0; to try these features, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.9</a>, the newest release candidate, which contains them. They are tested on Hetzner Cloud servers and with simulated Hetzner APIs; a cluster that keeps serving apps while it loses a node is still being verified on real servers.</div>
 
 ## Connect Hetzner Cloud
 
@@ -48,6 +48,17 @@ Open **Clusters & nodes**, a cluster, then the **Nodes** tab. The table lists ea
 - **Remove** drains the node (respecting disruption budgets for up to 15 minutes), takes a control-plane node out of etcd, and removes it from the cluster. A node holding local volumes is only removed if you tick the force option; their data is lost.
 
 A removed server that is not in a node pool must be switched off with `install.sh --uninstall`, or it registers again.
+
+### Disk health
+
+**v0.6.0** (from rc.6). Kwerft watches the disks of your servers, so a failing drive shows up before it takes data with it:
+
+- **Software RAID** (Linux md) on any node, read by node-exporter: each array's state, missing disks and rebuild progress.
+- **SMART** on dedicated servers: an exporter that Kwerft runs only on nodes the installer marked as dedicated reads each disk's SMART status, wear (how much of its rated endurance it has used), available spare and media errors. Hetzner Cloud servers have no physical disks to read.
+
+When any node has readings, the **Nodes** table gets a **Disks** column, and a **Disk health** section below it lists each such node with its arrays and disks: model, serial number, SMART status, wear, spare, media errors and what Kwerft makes of them. The readings are refreshed every two minutes.
+
+Four default alert rules come with it (raid-degraded, disk-failing, disk-wearing and disk-readings-missing); their alerts link to the cluster's Nodes page. See [Monitoring › Alert rules](/docs/monitoring#alert-rules).
 
 ## Node pools
 

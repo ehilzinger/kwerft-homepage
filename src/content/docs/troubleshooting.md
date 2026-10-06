@@ -120,7 +120,7 @@ Rules notify only the channels they name. Open the rule under **Monitoring › A
 
 - **RolledBack:** the installer or a check after it failed, and Kwerft went back to the version before. Apps were not touched. Fix the cause the log names and start the upgrade again.
 - **Failed** during the preflight or backup: nothing was changed. The message says which check failed, such as a node that is not Ready or too little disk (5 GiB free under `/var/lib` is needed).
-- **Failed** in the Backup step with "Failed to start transient service unit: Access denied": the console runs v0.6.0-rc.1 or rc.2, whose upgrade runner cannot reach the host's systemd. Nothing was changed. Run the installer of rc.3 or later once on the server ([Upgrades › Upgrade from v0.4 or v0.5](/docs/upgrades#upgrade-from-v04-or-v05)); later upgrades work from the console.
+- **Failed** or stuck in the Backup step ("Failed to start transient service unit: Access denied", or a Helm error about an unknown flag), or retrying "Failed to connect to system scope bus" when it starts the installer: the console runs v0.6.0-rc.1 to rc.7, whose upgrade runner cannot finish an upgrade. Nothing was changed. Run the installer of rc.8 or later once on the server ([Upgrades › Upgrade from v0.4 or v0.5](/docs/upgrades#upgrade-from-v04-or-v05)); later upgrades work from the console.
 - **Failed** after a failed rollback: the message lists the `helm rollback` commands to run on the server, and the names of the database copy and etcd snapshot taken before.
 - A **Kubernetes** upgrade that failed is not rolled back. The nodes that were done stay on the new version, the rest on the old one, which works. See the node's job log with `sudo k3s kubectl -n system-upgrade logs job/<job>`, fix the cause and upgrade again. See [Upgrades › Upgrade Kubernetes](/docs/upgrades#upgrade-kubernetes).
 
@@ -135,6 +135,14 @@ A console on v0.4.0 or v0.5.0 has no Updates tab: upgrade it once by re-running 
 - **Check connection** names what the bucket refused: a wrong key, a bucket that does not exist, or a store that does not encrypt with SSE-C, which Kwerft requires.
 - "Velero is not installed on this cluster": the server was installed with `--lite`, which leaves Velero out, or the Backups stage has not run. Re-run the installer without `--lite`.
 - A backup that ends **Partially failed** lists its errors on the Backups page; Velero's log has the details. `velero backup logs` does not work with the encrypted bucket.
+
+## A job fails with exit code 137 or "out of memory"
+
+The task used more memory than its size allows, and Kubernetes stopped it. From v0.6.0-rc.8 the run says so ("out of memory (limit 256Mi)"); earlier versions show exit code 137. Give the task or its schedule a larger **Size**, or, for a task started from an app, the app. See [Jobs](/docs/jobs).
+
+## An app or job cannot reach another app's public hostname
+
+With **Outbound access** set to **HTTPS to internet**, versions before v0.6.0-rc.8 drop HTTPS calls to hostnames that this cluster serves itself: they resolve to the cluster's own servers, which that setting did not include, so the call times out. Upgrade to v0.6.0-rc.8 or later, or set **Unrestricted** for that app or job. See [Apps › Who may connect, and where the app may go](/docs/apps#who-may-connect-and-where-the-app-may-go).
 
 ## A restore fails with exit code 60
 

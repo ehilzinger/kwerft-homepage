@@ -72,8 +72,12 @@ To quiet an alert while you work on it, click **Silence 1 h** or **Silence 24 h*
 | backup-failing | **v0.6.0.** A backup plan's latest backup failed | critical |
 | backup-missing | **v0.6.0.** A backup plan has not completed a backup within twice its interval | critical |
 | upgrade-failed | **v0.6.0.** The latest upgrade of Kwerft or Kubernetes failed or was rolled back; fires for a day, or until the next upgrade succeeds | critical |
+| raid-degraded | **v0.6.0.** A software RAID array on a node is degraded for a minute | critical |
+| disk-failing | **v0.6.0.** A disk reports SMART failed, a critical warning, low spare, or new media errors within a day | critical |
+| disk-wearing | **v0.6.0.** A disk has used more than 80 % of its rated endurance | warning |
+| disk-readings-missing | **v0.6.0.** A dedicated server has reported no disk readings for 15 minutes | warning |
 
-The backup and upgrade rules are platform alerts; see [Backups](/docs/backups#alerts) and [Upgrades](/docs/upgrades#alerts). Default rules notify nobody until you add a channel and pick it in the rule. You can change them, or switch them off with the **On** switch. A deleted default rule comes back within a minute with its default settings.
+The backup and upgrade rules are platform alerts; see [Backups](/docs/backups#alerts) and [Upgrades](/docs/upgrades#alerts). The disk rules (from v0.6.0-rc.6) cover the servers' RAID arrays and, on dedicated servers, their SMART readings; see [Clusters & nodes › Disk health](/docs/clusters-and-nodes#disk-health). Default rules notify nobody until you add a channel and pick it in the rule. You can change them, or switch them off with the **On** switch. A deleted default rule comes back within a minute with its default settings.
 
 To add your own, click **New rule**:
 
