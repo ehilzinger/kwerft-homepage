@@ -63,6 +63,20 @@ const features = [
     shots: [{ name: "compose", tab: "Compose import", alt: "The review of an imported Compose file: four apps, a volume and three secret sets, with warnings per service", url: "ops.example.com/apps/new" }, { name: "templates", tab: "Templates", alt: "The template catalog: MinIO, n8n, Plausible Analytics, PostgreSQL and Redis", url: "ops.example.com/apps/new" }],
   },
   {
+    id: "map",
+    eyebrow: "Infrastructure map",
+    since: "v0.6",
+    title: "See how everything connects",
+    text: "The Overview draws a live map of each cluster: from the internet through the firewall and your domains to the apps and their volumes, and on to what they reach. Switch to the Placement lens to see what runs on which server.",
+    points: [
+      "Traffic rules as arrows that move with the live Hubble counts; dropped connections in red",
+      "Click anything to see its inbound and outbound rules, with links to the pages that change them",
+      "\"Show on map\" next to every alert and failed run that is on the map",
+      "Filter by project, or show only what is failing",
+    ],
+    shots: [{ name: "infra-map-traffic", tab: "Traffic", alt: "The infrastructure map's Traffic view with a dropped connection from worker to payments selected and explained in the side panel", url: "ops.example.com" }, { name: "infra-map-placement", tab: "Placement", alt: "The infrastructure map in the Placement lens: servers with their pods, job runs and volumes", url: "ops.example.com" }],
+  },
+  {
     id: "jobs",
     eyebrow: "Jobs",
     title: "One-off tasks and cron schedules, next to your services",
@@ -74,7 +88,7 @@ const features = [
       "Jobs run below apps in priority, so a busy server sheds batch work first",
       "A job that runs out of memory says so, with its limit, instead of a bare exit code (v0.6)",
     ],
-    shots: [{ name: "jobs", tab: "Jobs", alt: "Jobs page listing schedules and recent runs", url: "ops.example.com/jobs" }],
+    shots: [{ name: "jobs", tab: "Jobs", alt: "Scheduled jobs and recent runs, with a nightly report stopped for running out of memory", url: "ops.example.com/jobs" }],
   },
   {
     id: "secrets",
@@ -142,7 +156,7 @@ const features = [
       "Apps on remote clusters keep their hostnames, DNS follows them",
       "Disk health for dedicated servers: RAID arrays and SMART readings per node, with alerts before a drive fails (v0.6)",
     ],
-    shots: [{ name: "cluster-nodes", tab: "Nodes", alt: "Node pools and nodes of the production cluster, including a dedicated server", url: "ops.example.com/clusters/local/nodes" }, { name: "clusters", tab: "Remote cluster", alt: "A remote cluster connected through its agent, with node pools and DNS records", url: "ops.example.com/clusters/hel1-staging" }],
+    shots: [{ name: "cluster-nodes", tab: "Nodes", alt: "Node pools and nodes of the production cluster, with a disk health column for the dedicated server", url: "ops.example.com/clusters/local/nodes" }, { name: "disk-health", tab: "Disk health", alt: "Disk health of a dedicated server: three RAID1 arrays whole and two NVMe drives with SMART passed and their wear", url: "ops.example.com/clusters/local/nodes" }, { name: "clusters", tab: "Remote cluster", alt: "A remote cluster connected through its agent, with node pools and DNS records", url: "ops.example.com/clusters/hel1-staging" }],
   },
   {
     id: "backups",
@@ -197,7 +211,7 @@ const stack = [
       </div>
     </div>
     <div class="wrap hero-shot">
-      <Screenshot name="overview" alt="The Kwerft console overview: what needs attention across apps, volumes and jobs" eager />
+      <Screenshot name="overview" alt="Cluster overview with alerts, a job that ran out of memory, available updates and the infrastructure map" eager />
     </div>
   </section>
 
@@ -370,6 +384,7 @@ const stack = [
             <li>Upgrades of Kwerft and Kubernetes from the console, with rollback</li>
             <li>Secret sets in the console</li>
             <li>Docker Compose import and templates</li>
+            <li>An infrastructure map of each cluster on the Overview</li>
             <li>Disk health for dedicated servers: RAID, SMART, alerts</li>
           </ul>
           <h3 class="after">Next, before the beta</h3>

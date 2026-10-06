@@ -50,8 +50,39 @@ const tab = (name) => async (page) => {
   await settle(page);
 };
 
+/** Opens the Overview's infrastructure map in full screen. */
+async function mapFullScreen(page) {
+  await page.locator("#map svg [data-sel]").first().waitFor();
+  await page.locator("#map").getByRole("button", { name: "Full screen" }).click();
+  await settle(page, 800);
+}
+
 const shots = [
   { name: "overview", path: "/" },
+  {
+    // The Overview's infrastructure map in full screen, the dropped connection selected.
+    name: "infra-map-traffic", path: "/",
+    act: async (page) => {
+      await mapFullScreen(page);
+      await page.locator('[data-sel="drop:0"] path.hit').evaluate((e) => e.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+      await page.locator(".imap-insp").waitFor();
+      // Nudge the map left a little so payments clears the inspector.
+      const box = await page.locator(".imap-canvas").boundingBox();
+      await page.mouse.move(box.x + 60, box.y + box.height - 120);
+      await page.mouse.down();
+      await page.mouse.move(box.x + 45, box.y + box.height - 120, { steps: 6 });
+      await page.mouse.up();
+      await settle(page, 800);
+    },
+  },
+  {
+    name: "infra-map-placement", path: "/",
+    act: async (page) => {
+      await mapFullScreen(page);
+      await page.getByRole("group", { name: "Lens" }).getByRole("button", { name: "Placement" }).click();
+      await settle(page, 1500);
+    },
+  },
   { name: "apps", path: "/apps" },
   { name: "app-detail", path: "/apps/shop/storefront" },
   {
@@ -83,6 +114,15 @@ const shots = [
   { name: "network-firewall", path: "/network", act: tab("Server firewall") },
   { name: "clusters", path: "/clusters/hel1-staging" },
   { name: "cluster-nodes", path: "/clusters/local/nodes" },
+  {
+    // The same page scrolled to the nodes table and Disk health (RAID, SMART) below it.
+    name: "disk-health", path: "/clusters/local/nodes",
+    act: async (page) => {
+      await page.getByRole("region", { name: "Disk health" }).waitFor();
+      await page.getByRole("region", { name: "Nodes" }).evaluate((e) => e.scrollIntoView({ block: "start" }));
+      await settle(page);
+    },
+  },
   { name: "updates", path: "/settings/updates" },
   { name: "backups", path: "/backups" },
   { name: "secrets", path: "/secrets?project=shop" },

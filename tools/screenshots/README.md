@@ -43,8 +43,12 @@ when the shots run; charts and logs come from a seeded generator, so runs look
 the same.
 
 Attention items on purpose: two firing alerts (`shop/worker` memory high, the
-`backups` volume filling up), a failed `nightly-report` run, and dropped
-connections from `shop/api` to `shop/payments` on Network › Traffic rules.
+`backups` volume filling up), a `nightly-report` run killed for running out of
+memory (limit 256Mi), and dropped connections from `shop/worker` to
+`shop/payments` on Network › Traffic rules. The AX42's disks are healthy: a
+RAID1 (md0–md2) over two NVMe drives, SMART passed, 34 % and 31 % worn
+(`disk-health` shows the Nodes page scrolled to them). The Overview's
+infrastructure map (`/topology`) is assembled from the same fixtures.
 
 The shell (terminal shot) is a mocked WebSocket in `shoot.mjs`; its content is
 in `mock/terminal.mjs`, which also serves the recordings' `.cast` files.

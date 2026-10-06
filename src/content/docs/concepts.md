@@ -99,7 +99,9 @@ Kwerft is pre-beta. The latest release is v0.4.0. The release candidate v0.6.0-r
 - [backups](/docs/backups) of projects, volumes and the console to Object Storage, encrypted with a recovery key, and a full restore onto a new server,
 - [upgrades from the console](/docs/upgrades) with automatic rollback, and Kubernetes upgrades node by node,
 - [secret sets](/docs/secrets) with write-only values,
-- [templates and the Docker Compose import](/docs/templates-and-compose).
+- [templates and the Docker Compose import](/docs/templates-and-compose),
+- an [infrastructure map](/docs/overview#the-infrastructure-map) of each cluster on the Overview,
+- [disk health](/docs/clusters-and-nodes#disk-health) for dedicated servers: RAID, SMART and alerts.
 
 An upgrade from the console has run on a real server (rc.8 to rc.9); backups, the full restore and Kubernetes upgrades have been tested against simulated storage and clusters, and their end-to-end runs on real servers are still to come. To try the release candidate, [pin v0.6.0-rc.9](/docs/installer#pin-a-version).
 

@@ -141,6 +141,7 @@ export function createServer({ dist }) {
     }
     if (match(/^\/clusters\/([^/]+)\/nodes$/)) return json(res, 200, fx.clusterNodes(now, r[1]));
     if (p === "/hetzner/catalog") return json(res, 200, fx.catalog());
+    if (p === "/topology") return json(res, 200, fx.topology(now, q.get("cluster") ?? "local"));
     if (p === "/traffic/drops") return json(res, 200, fx.trafficDrops(now));
     if (match(/^\/projects\/([^/]+)\/traffic$/)) return json(res, 200, fx.trafficFor(now, r[1]));
     if (p === "/firewall") return json(res, 200, fx.firewall(now));

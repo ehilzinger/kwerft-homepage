@@ -266,7 +266,8 @@ export function pods(now, project, name) {
   if (!a) return { pods: [], metrics: true, access: { logs: true, exec: true } };
   const r = rng(hash(`${project}/${name}`));
   const rs = podSuffix(`${project}/${name}/rs`, 9).toLowerCase().replace(/[^a-z0-9]/g, "");
-  const workers = a.cluster === "local" ? nodesLocal.slice(1, 3) : ["hel1-staging-workers-m4rt2", "hel1-staging-workers-x8kpz"];
+  // Internal tools share the control-plane server (also a worker) with one worker.
+  const workers = a.cluster !== "local" ? ["hel1-staging-workers-m4rt2", "hel1-staging-workers-x8kpz"] : a.project === "internal" ? [nodesLocal[0], nodesLocal[2]] : nodesLocal.slice(1, 3);
   const mem = { small: 140, medium: 310, large: 900 }[a.size] ?? 200;
   const list = Array.from({ length: a.replicas }, (_, i) => {
     const pod = a.stateful ? `${name}-${i}` : (a.project === "shop" && podNames[name]?.[i]) || `${name}-${rs.slice(0, 9)}-${podSuffix(`${project}/${name}/${i}`)}`;
@@ -432,7 +433,7 @@ export function tasks(now) {
   return [
     t("db-migrate-x7k2p", "shop", { phase: "running", fromApp: "api", image: imageOf(appDefs[1]), startedBy: "jonas@example.com", created: ago(now, 75), started: ago(now, 68) }),
     t(`cleanup-carts-${Math.floor(cartsLast / 60000)}`, "shop", { phase: "succeeded", schedule: "cleanup-carts", fromApp: "api", image: imageOf(appDefs[1]), scheduledAt: iso(cartsLast), created: iso(cartsLast), started: plus(cartsLast, 4), finished: plus(cartsLast, 41), exitCode: 0 }),
-    t(`nightly-report-${Math.floor(reportLast / 60000)}`, "internal", { phase: "failed", reason: "Failed", schedule: "nightly-report", image: "ghcr.io/example-shop/report-builder:2.3.1", scheduledAt: iso(reportLast), created: iso(reportLast), started: plus(reportLast, 6), finished: plus(reportLast, 258), exitCode: 1, message: "Exit code 1" }),
+    t(`nightly-report-${Math.floor(reportLast / 60000)}`, "internal", { phase: "failed", reason: "OutOfMemory", schedule: "nightly-report", image: "ghcr.io/example-shop/report-builder:2.3.1", scheduledAt: iso(reportLast), created: iso(reportLast), started: plus(reportLast, 6), finished: plus(reportLast, 258), exitCode: 137, terminationReason: "OOMKilled", memoryLimit: "256Mi", message: "The run used more memory than its limit (256Mi) and was stopped; give the Task a larger size (exit code 137)" }),
     t(`sitemap-${Math.floor(sitemapLast / 60000)}`, "shop", { phase: "succeeded", schedule: "sitemap", fromApp: "storefront", image: imageOf(appDefs[0]), scheduledAt: iso(sitemapLast), created: iso(sitemapLast), started: plus(sitemapLast, 5), finished: plus(sitemapLast, 96), exitCode: 0, restart: [] }),
     t(`db-backup-${Math.floor(backupLast / 60000)}`, "shop", { phase: "succeeded", schedule: "db-backup", fromApp: "postgres", image: "postgres:17.6", scheduledAt: iso(backupLast), created: iso(backupLast), started: plus(backupLast, 3), finished: plus(backupLast, 252), exitCode: 0 }),
     t("import-products-q4m8z", "shop", { phase: "succeeded", fromApp: "worker", image: imageOf(appDefs[3]), startedBy: "priya@example.com", overrides: ["SUPPLIER"], created: ago(now, 7 * HOUR), started: ago(now, 7 * HOUR - 5), finished: ago(now, 7 * HOUR - 312), exitCode: 0 }),
@@ -491,7 +492,11 @@ export function task(now, project, name) {
     apiVersion: "kwerft.dev/v1alpha1", kind: "Task",
     metadata: { name, namespace: project, resourceVersion: "77123", generation: 1, creationTimestamp: s.created, labels: s.schedule ? { "kwerft.dev/schedule": s.schedule } : {} },
     spec: { ...(s.fromApp ? { fromApp: s.fromApp } : { source: { image: { ref: s.image } } }), command: s.schedule === "nightly-report" ? ["report-builder", "--since", "24h", "--out", "/reports"] : undefined, timeout: "1h0m0s", retries: 0 },
-    status: { phase: s.phase[0].toUpperCase() + s.phase.slice(1), image: s.image, job: name, pod: `${name}-${podSuffix(name)}`, startTime: s.started, completionTime: s.finished, exitCode: s.exitCode },
+    status: {
+      phase: s.phase[0].toUpperCase() + s.phase.slice(1), image: s.image, job: name, pod: `${name}-${podSuffix(name)}`, startTime: s.started, completionTime: s.finished, exitCode: s.exitCode,
+      terminationReason: s.terminationReason ?? (s.exitCode === undefined ? undefined : s.exitCode === 0 ? "Completed" : "Error"), memoryLimit: s.memoryLimit,
+      conditions: s.reason ? [{ type: "Ready", status: "False", reason: s.reason, message: s.message ?? "", lastTransitionTime: s.finished ?? s.created }] : undefined,
+    },
   };
 }
 
@@ -544,6 +549,10 @@ export function alertRules() {
     r("certificate-expiring", "CertificateExpiring", "warning"),
     r("schedule-failing", "ScheduleFailing", "warning", { channels: ["ops-slack", "team-email"] }),
     r("build-failing", "BuildFailing", "warning"),
+    r("raid-degraded", "RAIDDegraded", "critical", { channels: ["ops-slack", "on-call"] }),
+    r("disk-failing", "DiskFailing", "critical", { channels: ["ops-slack", "on-call"] }),
+    r("disk-wearing", "DiskWearing", "warning"),
+    r("disk-readings-missing", "DiskReadingsMissing", "warning"),
     r("http-errors", "HTTPErrorRate", "warning", { default: false, threshold: 5, window: "5m0s", for: "5m0s", scope: { projects: ["shop"], apps: [] }, channels: ["ops-slack", "on-call"] }),
     r("checkout-latency", "HTTPLatency", "warning", { default: false, threshold: 800, window: "5m0s", for: "10m0s", scope: { projects: [], apps: ["shop/storefront", "shop/api"] } }),
   ];
@@ -662,7 +671,7 @@ export function clusterNodes(now, cluster) {
   if (cluster === "hel1-staging") {
     const s = (name, ip, pub) => ({ name, serverId: 58120000 + (hash(name) % 999), publicIp: pub, privateIp: ip, serverType: "cx33", phase: "Ready" });
     return {
-      cluster, provider: "hetzner-cloud", reachable: true, joinable: true, cloud: true, controlPlanes: 1,
+      cluster, provider: "hetzner-cloud", reachable: true, joinable: true, cloud: true, controlPlanes: 1, diskReadings: true,
       pools: [
         { name: "hel1-staging-control-plane", pool: "control-plane", role: "control-plane", serverType: "cx33", location: "hel1", count: 1, desired: 1, ready: 1, labels: {}, deleting: false, state: "ready", servers: [s("hel1-staging-cp-1", "10.1.0.2", "203.0.113.41")] },
         { name: "hel1-staging-workers", pool: "workers", role: "worker", serverType: "cx33", location: "hel1", count: 2, desired: 2, ready: 2, labels: {}, deleting: false, state: "ready", servers: [s("hel1-staging-workers-m4rt2", "10.1.0.3", "203.0.113.42"), s("hel1-staging-workers-x8kpz", "10.1.0.4", "203.0.113.43")] },
@@ -676,7 +685,7 @@ export function clusterNodes(now, cluster) {
   }
   const s = (name, ip, pub, type = "cx33") => ({ name, serverId: 51000000 + (hash(name) % 99999), publicIp: pub, privateIp: ip, serverType: type, phase: "Ready" });
   return {
-    cluster: "local", provider: "local", reachable: true, joinable: true, cloud: true, controlPlanes: 1,
+    cluster: "local", provider: "local", reachable: true, joinable: true, cloud: true, controlPlanes: 1, diskReadings: true,
     pools: [
       {
         name: "local-workers", pool: "workers", role: "worker", serverType: "cx33", location: "fsn1", count: 2, desired: 2, ready: 2, labels: {}, deleting: false, state: "ready",
@@ -688,7 +697,7 @@ export function clusterNodes(now, cluster) {
       node("fsn1-cp-1", ["control-plane", "worker"], undefined, "10.0.0.2", "203.0.113.10", "4", "16 GiB", 182),
       node("fsn1-workers-7k2mx", ["worker"], "local-workers", "10.0.0.3", "203.0.113.11", "4", "8 GiB", 150),
       node("fsn1-workers-q9xdt", ["worker"], "local-workers", "10.0.0.4", "203.0.113.12", "4", "8 GiB", 150),
-      { ...node("ax42-db-1", ["worker"], undefined, "10.0.1.2", "198.51.100.42", "16", "64 GiB", 96), platform: "dedicated · AX42" },
+      { ...node("ax42-db-1", ["worker"], undefined, "10.0.1.2", "198.51.100.42", "16", "64 GiB", 96), diskHealth: ax42Disks() },
     ].map((n) => ({ ...n, created: ago(now, n.created * DAY) })),
   };
 }
@@ -696,7 +705,24 @@ export function clusterNodes(now, cluster) {
 function node(name, roles, pool, internalIp, externalIp, cpu, memory, created) {
   return {
     name, roles, pool, ready: true, status: "Ready", internalIp, externalIp, kubeletVersion: "v1.34.1+k3s1", os: "Ubuntu 24.04.3 LTS",
-    cpu, memory, platform: name.startsWith("ax42") ? "dedicated" : "hcloud", unschedulable: false, created,
+    cpu, memory, platform: name.startsWith("ax42") ? "dedicated" : "cloud", unschedulable: false, created,
+  };
+}
+
+// Disk health of the dedicated AX42 (rc.6+), as internal/server/disk_health.go
+// judges it: Hetzner's installimage RAID1 over both NVMe drives (md0 swap,
+// md1 /boot, md2 /), SMART passed, some wear. Cloud servers have neither md
+// arrays nor SMART readings, so they get no diskHealth. Serials are made up.
+function ax42Disks() {
+  const md = (device) => ({ device, state: "active", active: 2, required: 2, failed: 0, spare: 0, syncedPercent: 100, health: "ok" });
+  const nvme = (device, serial, percentageUsed) => ({
+    device, model: "SAMSUNG MZVL2512HCJQ-00B00", serial, interface: "nvme", smartPassed: true, criticalWarning: 0,
+    percentageUsed, availableSpare: 100, availableSpareThreshold: 10, mediaErrors: 0, health: "ok", problems: [],
+  });
+  return {
+    health: "ok", summary: "2 disks healthy · 3 RAID arrays whole", smart: true,
+    arrays: [md("md0"), md("md1"), md("md2")],
+    disks: [nvme("nvme0", "S7DXNF0W204518", 34), nvme("nvme1", "S7DXNF0W204533", 31)],
   };
 }
 
@@ -766,9 +792,9 @@ export function trafficFor(now, project) {
     ],
     drops: [
       {
-        from: { namespace: "shop", app: "api", kind: "pod" }, to: { namespace: "shop", app: "payments", kind: "pod" }, port: 9090, protocol: "TCP", egress: false,
+        from: { namespace: "shop", app: "worker", kind: "pod" }, to: { namespace: "shop", app: "payments", kind: "pod" }, port: 9090, protocol: "TCP", egress: false,
         count: 14, first: ago(now, 52 * MIN), last: ago(now, 4 * MIN),
-        suggestion: { project: "shop", name: "api-to-payments-metrics", spec: { description: "api reads payment metrics", from: [{ app: "api" }], to: [{ app: "payments" }], ports: [{ port: 9090, protocol: "TCP" }] } },
+        suggestion: { project: "shop", name: "worker-to-payments-metrics", spec: { description: "worker reads payment metrics", from: [{ app: "worker" }], to: [{ app: "payments" }], ports: [{ port: 9090, protocol: "TCP" }] } },
       },
     ],
   };
@@ -1086,4 +1112,77 @@ export function secretSets(now, project) {
     ],
   };
   return sets[project] ?? [];
+}
+
+// ---- infrastructure map (Overview, GET /topology) --------------------------------------
+
+// One cluster's apps, jobs, volumes, domains, traffic rules, servers and
+// firewall, assembled from the fixtures above the way internal/server/
+// api_topology.go assembles them from the cluster.
+const volumeFill = { "shop/postgres/data-0": 0.41, "shop/redis/data-0": 0.18, "shop/backups": 0.86, "shop/uploads": 0.37, "internal/reports": 0.22, "shop-staging/postgres/data-0": 0.12 };
+const appMounts = { "shop/api": [{ volume: "uploads", path: "/srv/uploads", readOnly: false }], "shop/worker": [{ volume: "uploads", path: "/srv/uploads", readOnly: false }] };
+const runNodes = { "db-backup": "ax42-db-1", "cleanup-carts": "fsn1-workers-7k2mx", sitemap: "fsn1-workers-q9xdt", "nightly-report": "fsn1-cp-1" };
+const nodeUsage = {
+  "fsn1-cp-1": [1.4, 9.6], "fsn1-workers-7k2mx": [2.2, 5.9], "fsn1-workers-q9xdt": [1.9, 6.3], "ax42-db-1": [2.7, 27.5],
+  "hel1-staging-cp-1": [0.9, 4.1], "hel1-staging-workers-m4rt2": [0.6, 3.2], "hel1-staging-workers-x8kpz": [0.4, 2.7],
+};
+const gib = (s) => Number(s.replace(/Gi$/, ""));
+
+export function topology(now, cluster = "local") {
+  const prs = projects(now).filter((p) => p.cluster === cluster);
+  const names = prs.map((p) => p.name);
+  const own = [];
+  const apps = appDefs.filter((a) => a.cluster === cluster).map((a) => {
+    const summary = appSummaries(now).find((s) => s.project === a.project && s.name === a.name);
+    const pp = pods(now, a.project, a.name).pods;
+    const mounts = [...(appMounts[`${a.project}/${a.name}`] ?? [])];
+    if (a.volume) {
+      const name = `${a.name}/data-0`;
+      mounts.push({ volume: name, path: a.volume.path, readOnly: false });
+      own.push({
+        name, project: a.project, cluster, size: a.volume.size, class: "local-nvme", phase: "bound", usedBy: [a.name], created: ago(now, a.created * DAY),
+        own: true, app: a.name, node: pp[0]?.node,
+      });
+    }
+    return {
+      ...summary, ports: a.port ? [{ container: a.port, ...(a.public ? { public: a.public } : {}) }] : [], allowFrom: a.allowFrom ?? [], egress: a.egress ?? "https",
+      mounts, pods: pp.map((p) => ({ name: p.name, node: p.node, status: p.status, tone: p.tone, ready: p.ready, restarts: p.restarts })).sort((x, y) => x.name.localeCompare(y.name)),
+    };
+  });
+  const schedules_ = schedules(now).filter((s) => s.cluster === cluster).map((s) => ({ ...s, node: s.lastRun ? runNodes[s.name] : undefined }));
+  const tasks_ = tasks(now)
+    .filter((t) => t.cluster === cluster && !t.schedule && names.includes(t.project))
+    .filter((t) => !t.finished || now - new Date(t.finished).getTime() < DAY * 1000)
+    .map((t) => ({ ...t, node: t.phase === "running" ? "fsn1-workers-7k2mx" : "fsn1-workers-q9xdt" }));
+  const objects = volumes(now).filter((v) => v.cluster === cluster && !v.name.startsWith("data-")).map((v) => ({ ...v, own: false, node: v.usedBy.some((u) => u.startsWith("App/")) ? "fsn1-workers-7k2mx" : undefined }));
+  const vols = [...own, ...objects].map((v) => {
+    const fill = volumeFill[`${v.project}/${v.name}`];
+    return fill === undefined ? v : { ...v, usedBytes: Math.round(gib(v.size) * GiB * fill), capacityBytes: gib(v.size) * GiB };
+  });
+  const traffic = names.map((p) => trafficFor(now, p));
+  const nodes = clusterNodes(now, cluster);
+  const types = Object.fromEntries(nodes.pools.map((p) => [p.name, p.serverType]));
+  const byName = (x, y) => x.project.localeCompare(y.project) || x.name.localeCompare(y.name);
+  return {
+    cluster,
+    projects: prs.map((p) => ({ name: p.name, isolated: true, placed: true })).sort((x, y) => x.name.localeCompare(y.name)),
+    apps: apps.sort(byName),
+    schedules: schedules_.sort(byName),
+    tasks: tasks_,
+    volumes: vols.sort(byName),
+    domains: domains(now).filter((d) => d.cluster === cluster).sort((x, y) => x.project.localeCompare(y.project) || x.hostname.localeCompare(y.hostname)),
+    rules: traffic.flatMap((t) => t.rules.map((r) => ({ ...r, project: t.project }))).sort(byName),
+    drops: cluster === "local" ? traffic.flatMap((t) => t.drops) : [],
+    hubble: traffic[0]?.hubble ?? { state: "ok", since: ago(now, 6 * DAY), lost: 0, window: "1h" },
+    nodes: nodes.nodes.map((n) => {
+      const [cpu, mem] = nodeUsage[n.name] ?? [0.5, 2];
+      return {
+        ...n, serverType: types[n.pool],
+        usage: { cpu, cpuCapacity: Number(n.cpu), memory: mem * GiB, memoryCapacity: Number(n.memory.replace(/ GiB$/, "")) * GiB },
+      };
+    }).sort((x, y) => x.name.localeCompare(y.name)),
+    nodesPartial: false,
+    firewall: cluster === "local" ? firewall(now).rules : [],
+    metrics: true,
+  };
 }
