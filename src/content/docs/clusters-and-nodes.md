@@ -7,7 +7,7 @@ order: 4
 
 You start with one server, which is the cluster `local`. From **Clusters & nodes** you can add servers to it, make its control plane highly available, and connect more clusters, in other locations or on other servers, to the same console. Owners and admins manage clusters and nodes; other roles only see which cluster a project runs in.
 
-<div class="note">Everything on this page needs Kwerft v0.5.0, which is in release candidates. The default install command installs v0.4.0; to try these features, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.3</a>, the newest release candidate, which contains them. They are tested on Hetzner Cloud servers and with simulated Hetzner APIs; a cluster that keeps serving apps while it loses a node is still being verified on real servers.</div>
+<div class="note">Everything on this page needs Kwerft v0.5.0, which is in release candidates. The default install command installs v0.4.0; to try these features, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.4</a>, the newest release candidate, which contains them. They are tested on Hetzner Cloud servers and with simulated Hetzner APIs; a cluster that keeps serving apps while it loses a node is still being verified on real servers.</div>
 
 ## Connect Hetzner Cloud
 

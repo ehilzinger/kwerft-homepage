@@ -120,7 +120,7 @@ Rules notify only the channels they name. Open the rule under **Monitoring › A
 
 - **RolledBack:** the installer or a check after it failed, and Kwerft went back to the version before. Apps were not touched. Fix the cause the log names and start the upgrade again.
 - **Failed** during the preflight or backup: nothing was changed. The message says which check failed, such as a node that is not Ready or too little disk (5 GiB free under `/var/lib` is needed).
-- **Failed** in the Backup step with "Failed to start transient service unit: Access denied": the console runs v0.6.0-rc.1 or rc.2, whose upgrade runner cannot reach the host's systemd. Nothing was changed. Run the rc.3 installer once on the server ([Upgrades › Upgrade from v0.4 or v0.5](/docs/upgrades#upgrade-from-v04-or-v05)); later upgrades work from the console.
+- **Failed** in the Backup step with "Failed to start transient service unit: Access denied": the console runs v0.6.0-rc.1 or rc.2, whose upgrade runner cannot reach the host's systemd. Nothing was changed. Run the installer of rc.3 or later once on the server ([Upgrades › Upgrade from v0.4 or v0.5](/docs/upgrades#upgrade-from-v04-or-v05)); later upgrades work from the console.
 - **Failed** after a failed rollback: the message lists the `helm rollback` commands to run on the server, and the names of the database copy and etcd snapshot taken before.
 - A **Kubernetes** upgrade that failed is not rolled back. The nodes that were done stay on the new version, the rest on the old one, which works. See the node's job log with `sudo k3s kubectl -n system-upgrade logs job/<job>`, fix the cause and upgrade again. See [Upgrades › Upgrade Kubernetes](/docs/upgrades#upgrade-kubernetes).
 

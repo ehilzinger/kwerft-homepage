@@ -96,20 +96,22 @@ The default alert rule **upgrade-failed** fires when the latest upgrade of Kwerf
 
 ## Upgrade from v0.4 or v0.5
 
-Consoles on v0.4.0 and v0.5.0 have no Updates tab. Upgrade them once by running the installer of the release you want on the console's server, as root. The same goes for consoles on v0.6.0-rc.1 and rc.2: their upgrade runner is refused by systemd on Ubuntu ("Access denied" in the Backup step), so move them to rc.3 this way once; console upgrades work from rc.3 on.
+Consoles on v0.4.0 and v0.5.0 have no Updates tab. Upgrade them once by running the installer of the release you want on the console's server, as root. The same goes for consoles on v0.6.0-rc.1 and rc.2: their upgrade runner is refused by systemd on Ubuntu ("Access denied" in the Backup step), so move them to rc.3 or later this way once; console upgrades work from rc.3 on.
 
 ```bash
-curl -fsSL https://kwerft.dev/v0.6.0-rc.3/install.sh | sudo bash -s -- --yes
+curl -fsSL https://kwerft.dev/v0.6.0-rc.4/install.sh | sudo bash -s -- --yes
 ```
 
 Give the same flags as when you installed (for example `--acme-server staging` or `--lite`): servers installed before 0.6 have no remembered settings yet, so this one run needs them. From then on the server remembers them (see [Installer › Re-run](/docs/installer#re-run-to-repair-or-upgrade)), and the console can upgrade itself.
+
+From v0.6.0-rc.4, a re-run also leaves a copy of the console's database: the first time a new version starts, the console copies its database before migrating it, to `backups/pre-<version>-from-<previous>.db` on its data volume (the newest three are kept).
 
 The re-run upgrades Kwerft and the platform components, and adds Velero (for [backups](/docs/backups)) and the system-upgrade-controller. It does not change the k3s version, but restarts k3s once to turn on its etcd snapshot settings; running containers keep running through a k3s restart.
 
 Connected clusters are upgraded the same way: on the server where you ran the adopt command, run the new release's installer in agent mode. The agent token is read back from the cluster:
 
 ```bash
-curl -fsSL https://kwerft.dev/v0.6.0-rc.3/install.sh | sudo bash -s -- --agent --console https://ops.example.com --yes
+curl -fsSL https://kwerft.dev/v0.6.0-rc.4/install.sh | sudo bash -s -- --agent --console https://ops.example.com --yes
 ```
 
 Upgrade the console first: it works with clusters one minor version behind it, not ahead of it.
