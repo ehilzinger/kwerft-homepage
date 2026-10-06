@@ -13,3 +13,8 @@ about a feature, and mark anything not in the latest stable release.
   (`mock/fixtures.mjs`); demo data must stay fictional (example.com,
   documentation IP ranges, made-up people).
 - Release facts (`LATEST`, install URL) live in `src/site.ts`.
+- Search engines: `@astrojs/sitemap` writes `sitemap-index.xml` (filter in
+  `astro.config.mjs`), `public/robots.txt` points at it. A page that should
+  stay out of Google gets `noindex` on `<Base>` and goes into that filter;
+  pages with a translation pass `alternates` (hreflang). JSON-LD goes through
+  `<Base jsonld>` (a data block, allowed under the CSP).

@@ -1,0 +1,6 @@
+# kwerft.dev — everything may be crawled; /thanks is only reached after the contact form.
+User-agent: *
+Allow: /
+Disallow: /thanks
+
+Sitemap: https://kwerft.dev/sitemap-index.xml

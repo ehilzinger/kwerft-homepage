@@ -3,7 +3,34 @@ import Base from "../layouts/Base.astro";
 import Screenshot from "../components/Screenshot.astro";
 import Command from "../components/Command.astro";
 import HatchureLogo from "../components/logos/Hatchure.astro";
-import { INSTALL_CMD, INSTALL_DISPLAY, LATEST, PREVIEW, RELEASES_URL, SOURCE_URL } from "../site";
+import { INSTALL_CMD, INSTALL_DISPLAY, LATEST, PREVIEW, RELEASES_URL, SOURCE_URL, INSTALL_URL, OPERATOR } from "../site";
+
+// Structured data for search engines: the site, and Kwerft as a free application.
+const jsonld = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Kwerft",
+    url: "https://kwerft.dev/",
+    inLanguage: "en",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Kwerft",
+    description: "A self-hosted Kubernetes console for Hetzner Cloud and dedicated servers, installed with one script.",
+    url: "https://kwerft.dev/",
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Ubuntu 22.04, 24.04, 26.04",
+    softwareVersion: LATEST.replace(/^v/, ""),
+    downloadUrl: INSTALL_URL,
+    license: "https://www.gnu.org/licenses/agpl-3.0.html",
+    sameAs: [SOURCE_URL],
+    offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+    author: { "@type": "Person", name: OPERATOR.name },
+    screenshot: "https://kwerft.dev/og.png",
+  },
+];
 import "../styles/home.css";
 import "../styles/support.css";
 
@@ -151,7 +178,7 @@ const stack = [
   { k: "Hetzner", v: "Cloud API · Robot · DNS · Cloud Volumes · Load Balancers · Object Storage" },
 ];
 ---
-<Base title="Kwerft" description="Rent a Hetzner server, run one script, manage containers from the browser. Kwerft installs hardened Kubernetes with a web console on Hetzner Cloud and dedicated servers.">
+<Base jsonld={jsonld} title="Kwerft" description="Rent a Hetzner server, run one script, manage containers from the browser. Kwerft installs hardened Kubernetes with a web console on Hetzner Cloud and dedicated servers.">
   <section class="hero">
     <div class="wrap">
       <div class="hero-text">

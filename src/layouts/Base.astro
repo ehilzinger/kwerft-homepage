@@ -9,29 +9,49 @@ import "../styles/site.css";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 
-interface Props { title: string; description: string; }
-const { title, description } = Astro.props;
+interface Props {
+  title: string;
+  description: string;
+  lang?: "en" | "de";
+  /** Keep the page out of search results (and the sitemap filter in astro.config.mjs). */
+  noindex?: boolean;
+  /** The same page in other languages, for hreflang. */
+  alternates?: { lang: string; href: string }[];
+  ogType?: "website" | "article";
+  /** schema.org structured data, rendered as JSON-LD (a data block, which the CSP does not apply to). */
+  jsonld?: object | object[];
+}
+const { title, description, lang = "en", noindex = false, alternates = [], ogType = "website", jsonld } = Astro.props;
 const fullTitle = title === "Kwerft" ? "Kwerft — Kubernetes for your Hetzner servers" : `${title} · Kwerft`;
-const canonical = new URL(Astro.url.pathname, Astro.site);
+const canonical = new URL(Astro.url.pathname.replace(/\.html$/, "").replace(/\/$/, "") || "/", Astro.site);
 ---
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={new URL(a.href, Astro.site)} />)}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
     <meta name="theme-color" content="#F1F3F7" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0B0F16" media="(prefers-color-scheme: dark)" />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:locale" content={lang === "de" ? "de_DE" : "en_US"} />
     <meta property="og:site_name" content="Kwerft" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={new URL("/og.png", Astro.site)} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
+    {jsonld && <script type="application/ld+json" is:inline set:html={JSON.stringify(jsonld)} />}
     <script is:inline src="/theme.js"></script>
   </head>
   <body>

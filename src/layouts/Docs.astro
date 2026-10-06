@@ -15,8 +15,29 @@ const prev = i > 0 ? docs[i - 1] : undefined;
 const next = i >= 0 && i < docs.length - 1 ? docs[i + 1] : undefined;
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
 const groups = GROUPS.map((g) => ({ g, items: docs.filter((d) => d.data.group === g) })).filter((x) => x.items.length);
+// Structured data: a breadcrumb trail (Docs › page) and, on a help page, the article itself.
+const site = Astro.site!;
+const url = new URL(current ? `/docs/${current}` : "/docs", site).href;
+const crumbs = [{ name: "Docs", item: new URL("/docs", site).href }, ...(current ? [{ name: title, item: url }] : [])];
+const jsonld = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, n) => ({ "@type": "ListItem", position: n + 1, name: c.name, item: c.item })),
+  },
+  ...(current ? [{
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    headline: title,
+    description,
+    url,
+    inLanguage: "en",
+    isPartOf: { "@type": "WebSite", name: "Kwerft", url: site.href },
+    about: { "@type": "SoftwareApplication", name: "Kwerft" },
+  }] : []),
+];
 ---
-<Base title={title} description={description}>
+<Base title={title} description={description} ogType={current ? "article" : "website"} jsonld={jsonld}>
   <div class="wrap docs">
     <aside class="docs-side" aria-label="Documentation">
       <h4>Start</h4>
