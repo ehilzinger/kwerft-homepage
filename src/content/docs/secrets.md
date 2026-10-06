@@ -7,7 +7,7 @@ order: 5
 
 Passwords, API keys and tokens belong in a **secret set**, not in plain environment variables. A secret set is a named group of keys in a project, such as `payments` with `STRIPE_KEY` and `WEBHOOK_SECRET`. Apps, jobs and schedules of the project use its values as environment variables or files. Values are write-only: once saved, nobody reads them back in the console.
 
-<div class="note">Secret sets need Kwerft v0.6.0, which is in release candidates. The default install command installs v0.4.0; to try them, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.1</a>. In earlier versions, see <a href="/docs/apps#secrets">Apps › Secrets</a> for the way around.</div>
+<div class="note">Secret sets need Kwerft v0.6.0, which is in release candidates. The default install command installs v0.4.0; to try them, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.3</a>. In earlier versions, see <a href="/docs/apps#secrets">Apps › Secrets</a> for the way around.</div>
 
 ## Who can do what
 

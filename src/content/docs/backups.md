@@ -7,7 +7,7 @@ order: 5
 
 Kwerft backs up your projects, their volumes and its own state to an S3 bucket, such as Hetzner Object Storage, with [Velero](https://velero.io). Everything in the bucket is encrypted with a **recovery key** that Kwerft shows you once; keep a copy outside the cluster, because a restore onto a new server needs it. From the console you restore a project or some of its apps; with `install.sh --restore` you rebuild the whole console on a new server.
 
-<div class="note">Backups need Kwerft v0.6.0, which is in release candidates. The default install command installs v0.4.0; to try them, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.1</a>. They have been tested against simulated S3 storage only, not yet against real Hetzner Object Storage, and the end-to-end restore onto a new server has not run on real servers yet. Keep a second copy of data you cannot lose until backups have proven themselves for you.</div>
+<div class="note">Backups need Kwerft v0.6.0, which is in release candidates. The default install command installs v0.4.0; to try them, <a href="/docs/installer#pin-a-version">pin v0.6.0-rc.3</a>. They have been tested against simulated S3 storage only, not yet against real Hetzner Object Storage, and the end-to-end restore onto a new server has not run on real servers yet. Keep a second copy of data you cannot lose until backups have proven themselves for you.</div>
 
 Owners and admins set up backups and restore. The **Backups** page and the backup settings are hidden from other roles.
 
@@ -108,7 +108,7 @@ backups:
 4. Run the installer of the same release with `--restore`:
 
 ```bash
-curl -fsSL https://kwerft.dev/v0.6.0-rc.1/install.sh | sudo bash -s -- --config /root/kwerft.yaml --restore latest --yes
+curl -fsSL https://kwerft.dev/v0.6.0-rc.3/install.sh | sudo bash -s -- --config /root/kwerft.yaml --restore latest --yes
 ```
 
 `--restore latest` takes the newest complete Cluster backup; `--restore <name>` takes a named one (the names are on the Backups page). The installer builds the platform as usual, then restores the backup in its own **Restore** stage before the Kwerft stage. Volume data can take a while; the installer waits up to four hours and prints its progress.
@@ -138,7 +138,7 @@ kwerft etcd-snapshot fetch --config kwerft.yaml --name latest
 The binary is `/usr/local/bin/kwerft` in the console image `ghcr.io/ehilzinger/kwerft:<version>`, for example:
 
 ```bash
-docker run --rm --user 0 -v /root:/root -w /root ghcr.io/ehilzinger/kwerft:0.6.0-rc.1 \
+docker run --rm --user 0 -v /root:/root -w /root ghcr.io/ehilzinger/kwerft:0.6.0-rc.3 \
   etcd-snapshot fetch --config kwerft.yaml --name latest
 ```
 

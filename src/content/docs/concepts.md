@@ -94,14 +94,14 @@ There are four roles. Owners and admins manage everything; developers deploy and
 
 ## What is new, and what is not built yet
 
-Kwerft is pre-beta. The latest release is v0.4.0. The release candidate v0.6.0-rc.1 contains everything from the v0.5.0 candidates and adds what was missing for running Kwerft for real:
+Kwerft is pre-beta. The latest release is v0.4.0. The release candidate v0.6.0-rc.3 contains everything from the v0.5.0 candidates and adds what was missing for running Kwerft for real:
 
 - [backups](/docs/backups) of projects, volumes and the console to Object Storage, encrypted with a recovery key, and a full restore onto a new server,
 - [upgrades from the console](/docs/upgrades) with automatic rollback, and Kubernetes upgrades node by node,
 - [secret sets](/docs/secrets) with write-only values,
 - [templates and the Docker Compose import](/docs/templates-and-compose).
 
-Backups and upgrades have been tested against simulated storage and clusters; their end-to-end runs on real servers are still to come. To try the release candidate, [pin v0.6.0-rc.1](/docs/installer#pin-a-version).
+Backups and upgrades have been tested against simulated storage and clusters; their end-to-end runs on real servers are still to come. To try the release candidate, [pin v0.6.0-rc.3](/docs/installer#pin-a-version).
 
 Not built yet: a highly available console, backups of connected clusters, and Kwerft for Mac, a native app that runs the same projects locally, which is planned after the beta.
 

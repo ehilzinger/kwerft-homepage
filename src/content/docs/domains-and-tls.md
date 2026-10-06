@@ -101,7 +101,7 @@ dns:
 
 ## Test servers: Let's Encrypt staging
 
-For servers you reinstall often, `--acme-server staging` takes certificates from Let's Encrypt's staging CA. Browsers do not trust them, but the rate limits are generous. It needs Kwerft v0.5.0, which is in release candidates ([pin v0.6.0-rc.1](/docs/installer#pin-a-version)). With the v0.5.0 candidates, give the flag on every run; from v0.6.0 the server remembers it.
+For servers you reinstall often, `--acme-server staging` takes certificates from Let's Encrypt's staging CA. Browsers do not trust them, but the rate limits are generous. It needs Kwerft v0.5.0, which is in release candidates ([pin v0.6.0-rc.3](/docs/installer#pin-a-version)). With the v0.5.0 candidates, give the flag on every run; from v0.6.0 the server remembers it.
 
 ## Remote clusters
 

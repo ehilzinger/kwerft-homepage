@@ -101,7 +101,7 @@ Under **Settings › Health & draining**:
 
 Rollouts start the new replica first and stop an old one only after that. Set a health check for every app that serves traffic.
 
-<div class="note">The drain setting is in v0.5.0-rc.3 and later, including v0.6.0-rc.1. In v0.4.0 and earlier release candidates this card is called <b>Health check</b> and has no drain field.</div>
+<div class="note">The drain setting is in v0.5.0-rc.3 and later, including the v0.6.0 release candidates. In v0.4.0 and earlier release candidates this card is called <b>Health check</b> and has no drain field.</div>
 
 ## Revisions, rollback and restart
 
