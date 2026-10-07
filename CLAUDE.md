@@ -1,7 +1,7 @@
 # kwerft.dev — notes for Claude
 
 Marketing site and docs for Kwerft. The product lives in the sibling repo
-`../werft` (private); it is the source of truth for every claim here — check
+`../werft` (public since 2026-10-05, AGPL-3.0-only); it is the source of truth for every claim here — check
 `install/install.sh --help`, `docs/plan.md` and `web/src/pages` before writing
 about a feature, and mark anything not in the latest stable release.
 
