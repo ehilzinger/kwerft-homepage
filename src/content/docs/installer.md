@@ -44,6 +44,26 @@ v0.6.0-rc.9 contains everything from the v0.5.0 release candidates ([Clusters & 
 
 The console image is `ghcr.io/ehilzinger/kwerft` (amd64 and arm64) and the chart `oci://ghcr.io/ehilzinger/charts/kwerft`; both are public, so no registry login is needed.
 
+## Install from a Hetzner cloud config
+
+A new Hetzner Cloud server can install Kwerft on its own while it boots: paste this into **Cloud config** when you create the server (Ubuntu image, 8 GB of RAM or more), and add your SSH key as usual.
+
+```yaml
+#cloud-config
+runcmd:
+  - curl -fsSL https://kwerft.dev/install.sh | bash -s -- --yes --email you@example.com
+```
+
+- cloud-init runs the command as root, so there is no `sudo`. `--yes` skips every prompt.
+- Pin a release with `https://kwerft.dev/v<version>/install.sh` (see [Pin a version](#pin-a-version)).
+- Add `--domain ops.example.com` only if that name's DNS record already points at the new server's address, which you know only once the server exists. Without it the console comes up on `<address>.sslip.io`; set your own hostname later under Settings.
+- The install takes about five minutes after the server starts. Follow it with `ssh root@<address> tail -f /var/log/kwerft/install.log`; cloud-init's own output is in `/var/log/cloud-init-output.log`.
+- Then create the owner account with the setup token: `ssh root@<address> cat /etc/kwerft/setup-token`, and open the `/setup` address the log's last lines print (see [The setup token](#the-setup-token)).
+
+<div class="warn"><b>Keep secrets out of the cloud config.</b> Hetzner keeps a server's cloud config readable: in the Cloud Console, through the API, and from inside the server through the metadata service. Don't put passwords or tokens in it, such as an owner password or a DNS token for <code>--config</code>. Create the owner with the setup token instead, or copy a <a href="#config-file">config file</a> and its token files onto the server over SSH and run the installer there.</div>
+
+Kwerft's own [node pools](/docs/clusters-and-nodes) start their servers the same way; their cloud config holds only a short-lived join token.
+
 ## Options
 
 Flags marked **v0.5.0** exist from the v0.5.0 release candidates on, flags marked **v0.6.0** from v0.6.0-rc.1 on.
@@ -181,10 +201,13 @@ hcloud:
 | `backups.prefix` | The folder in the bucket, as Settings › Backups showed it. Defaults to `--domain`; without either it is required. |
 | `backups.accessKeyFile`, `backups.secretKeyFile` | Files with the S3 access key and secret key. |
 | `backups.recoveryKeyFile` | A file with the recovery key. The file the console offers for download works as it is. |
+| `owner.email`, `owner.passwordFile` | **v0.6.0.** The owner account, created by the console instead of a setup token. The password file holds 12 to 256 characters; it passes through the cluster only until the console has stored its hash. Optional `owner.name`. Ignored with `--restore`, whose accounts come from the backup. |
 
 An apps domain or DNS solver given here replaces what was chosen in Settings; without them, Settings stays as it is. The token files stay where they are; the cluster keeps a copy that the console never shows. See [Domains & TLS](/docs/domains-and-tls) and [Clusters & nodes](/docs/clusters-and-nodes).
 
-<div class="warn"><b>Known issue: the owner account.</b> The installer's help says <code>--config</code> pre-seeds the owner and skips the setup wizard, with an <code>owner: { email, passwordFile }</code> section. In current releases the console does not apply that section, and an install with <code>--config</code> creates no setup token, so it has no way to create the owner. Until this is fixed, run the installer once more <b>without</b> <code>--config</code>: it keeps the settings already applied, creates a setup token and prints the <code>/setup</code> address.</div>
+With `owner:` the summary says `owner you@example.com from --config` and no setup token is created. Without it, or if the console rejects the owner (an invalid address or password, or accounts that already exist), the install hands out a setup token as usual.
+
+<div class="warn"><b>Before v0.6.0:</b> the console ignored the <code>owner:</code> section, and an install with <code>--config</code> created no setup token. On those releases, run the installer once more <b>without</b> <code>--config</code>: it keeps the settings already applied, creates a setup token and prints the <code>/setup</code> address.</div>
 
 ## Stages
 
